@@ -65,3 +65,30 @@ export type StrikeAccountProfile = {
   canReceive: boolean
   currencies: StrikeSupportedCurrency[]
 }
+
+export type StrikeFeePolicy = 'INCLUSIVE' | 'EXCLUSIVE'
+
+export type StrikeCreateOnchainQuoteRequest = {
+  btcAddress: string
+  sourceCurrency: StrikeCurrency
+  description?: string
+  amount: StrikeInvoiceAmount
+  feePolicy?: StrikeFeePolicy
+  onchainTierId: string
+}
+
+export type StrikeOnchainQuote = {
+  paymentQuoteId: string
+  description?: string
+  validUntil?: string // ISO 8601 date-time
+  estimatedDeliveryDurationInMin?: number
+  conversionRate?: {
+    amount: string
+    sourceCurrency: StrikeCurrency
+    targetCurrency: StrikeCurrency
+  }
+  amount: StrikeCurrencyAmount
+  totalFee?: StrikeCurrencyAmount
+  totalAmount: StrikeCurrencyAmount
+  reward?: StrikeCurrencyAmount
+}

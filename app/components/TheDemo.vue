@@ -1,21 +1,17 @@
 <script lang="ts" setup>
 import { useQRCode } from '@vueuse/integrations/useQRCode'
 import { nanoid } from 'nanoid'
-import { cancelInvoice, createInvoice, createQuote, fetchProfileByHandle } from '~~/lib/strike/api'
+import { getInvoices, cancelInvoice, createInvoice, createQuote, fetchProfileByHandle } from '~~/lib/strike/api'
 import type { StrikeAccountProfile, StrikeInvoice } from '~~/lib/strike/types'
 
 // TODO: if user using own API_KEY, check if given handle matches for the API_KEY account, otherwise payment will fail
 const accountHandle = useCookie<string>('tipbit_strike_account_handle')
-const { data: account } = useAsyncData<StrikeAccountProfile | undefined>(
-  'strike:account',
-  async () => {
-    if (!accountHandle.value) {
-      return undefined
-    }
-    return fetchProfileByHandle(accountHandle.value)
-  },
-  {}
-)
+const { data: account } = useAsyncData<StrikeAccountProfile | undefined>('strike:account', async () => {
+  if (!accountHandle.value) {
+    return undefined
+  }
+  return fetchProfileByHandle(accountHandle.value)
+})
 
 watchEffect(() => {
   console.log('account', account.value)
@@ -112,15 +108,24 @@ const downloadQrCode = () => {
   link.click()
 }
 
+const invoices = ref<StrikeInvoice[]>([])
+
 const clearAccount = () => {
   accountHandle.value = ''
   account.value = undefined
+  invoices.value = []
+}
+
+const getAccountInvoices = async () => {
+  const fetchedInvoices = await getInvoices()
+  console.log('fetchedInvoices', fetchedInvoices)
+  invoices.value = fetchedInvoices
 }
 </script>
 
 <template>
   <div class="font-mono">
-    <div>
+    <section>
       <form v-if="!account" class="flex gap-2" @submit.prevent="fetchAccount">
         <input v-model="accountHandle" placeholder="Strike handle" class="rounded-sm bg-zinc-200/20 px-2 py-0.5" />
         <button class="rounded-sm bg-white px-2 py-0.5 text-zinc-950" type="submit">Fetch Account</button>
@@ -173,61 +178,65 @@ const clearAccount = () => {
           </details>
         </div>
       </div>
-    </div>
+    </section>
 
-    <div v-if="account" class="mt-8 flex flex-col gap-5">
-      <div class="flex gap-2">
-        <input
-          v-model.number="satsAmount"
-          :disabled="!!lnInvoice"
-          class="rounded-sm bg-zinc-200/20 px-2 py-0.5"
-          type="number"
-          placeholder="Tip amount (sats)"
-        />
-        <button class="rounded-sm bg-white px-2 py-0.5 text-zinc-950" :disabled="!satsAmount" @click="tip">Tip</button>
-      </div>
-
-      <div v-if="lnInvoice || isInvoicePending" class="max-w-2xl space-y-3">
-        <h2 class="text-xl">⚡ Lightning Invoice:</h2>
-
-        <div v-if="isInvoicePending" class="animate-pulse">
-          <p>Creating invoice...</p>
+    <div v-if="account">
+      <section class="mt-8 flex flex-col gap-5">
+        <div class="flex gap-2">
+          <input
+            v-model.number="satsAmount"
+            :disabled="!!lnInvoice"
+            class="rounded-sm bg-zinc-200/20 px-2 py-0.5"
+            type="number"
+            placeholder="Tip amount (sats)"
+          />
+          <button class="rounded-sm bg-white px-2 py-0.5 text-zinc-950" :disabled="!satsAmount" @click="tip">
+            Tip
+          </button>
         </div>
 
-        <div v-else>
-          <p class="text-xl">
-            <strong>{{ formattedSatsAmount }} sats</strong>
-          </p>
-          <div class="mt-4 grid grid-cols-2 gap-6">
-            <div class="flex flex-col gap-4">
-              <p readonly class="font-mono break-words">{{ lnInvoice }}</p>
+        <div v-if="lnInvoice || isInvoicePending" class="max-w-2xl space-y-3">
+          <h2 class="text-xl">⚡ Lightning Invoice:</h2>
 
-              <div class="mt-auto flex justify-end gap-3">
-                <button class="rounded-sm bg-red-800/90 px-2 py-0.5 text-zinc-100" @click="cancelPendingInvoice">
-                  Cancel
-                </button>
-                <button class="rounded-sm bg-white/90 px-2 py-0.5 text-zinc-950" @click="copyInvoice()">
-                  {{ copied ? 'Copied!!! 😎' : 'Copy to clibpoard' }}
-                </button>
+          <div v-if="isInvoicePending" class="animate-pulse">
+            <p>Creating invoice...</p>
+          </div>
+
+          <div v-else>
+            <p class="text-xl">
+              <strong>{{ formattedSatsAmount }} sats</strong>
+            </p>
+            <div class="mt-4 grid grid-cols-2 gap-6">
+              <div class="flex flex-col gap-4">
+                <p readonly class="font-mono break-words">{{ lnInvoice }}</p>
+
+                <div class="mt-auto flex justify-end gap-3">
+                  <button class="rounded-sm bg-red-800/90 px-2 py-0.5 text-zinc-100" @click="cancelPendingInvoice">
+                    Cancel
+                  </button>
+                  <button class="rounded-sm bg-white/90 px-2 py-0.5 text-zinc-950" @click="copyInvoice()">
+                    {{ copied ? 'Copied!!! 😎' : 'Copy to clibpoard' }}
+                  </button>
+                </div>
               </div>
-            </div>
-            <div class="flex flex-col gap-3">
-              <img
-                v-if="lnInvoiceQr"
-                id="invoice-qr"
-                :src="lnInvoiceQr"
-                alt="QR Code"
-                class="overflow-hidden rounded-sm"
-              />
-              <div>
-                <button class="rounded-sm bg-white/90 px-2 py-0.5 text-zinc-950" @click="downloadQrCode">
-                  Download QR
-                </button>
+              <div class="flex flex-col gap-3">
+                <img
+                  v-if="lnInvoiceQr"
+                  id="invoice-qr"
+                  :src="lnInvoiceQr"
+                  alt="QR Code"
+                  class="overflow-hidden rounded-sm"
+                />
+                <div>
+                  <button class="rounded-sm bg-white/90 px-2 py-0.5 text-zinc-950" @click="downloadQrCode">
+                    Download QR
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </section>
     </div>
   </div>
 </template>

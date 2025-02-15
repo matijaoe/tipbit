@@ -20,10 +20,25 @@ export const createInvoice = async (body: StrikeCreateInvoiceRequest) => {
   })
 }
 
+export const createInvoiceForHandle = async (handle: string, body: StrikeCreateInvoiceRequest) => {
+  const strikeApiFetch = useStrikeApi()
+  return await strikeApiFetch<StrikeInvoice>(`/invoices/handle/${handle}`, {
+    method: 'POST',
+    body,
+  })
+}
+
 export const createQuote = async (invoiceId: string) => {
   const strikeApiFetch = useStrikeApi()
   return await strikeApiFetch<StrikeQuote>(`/invoices/${invoiceId}/quote`, {
     method: 'POST',
+  })
+}
+
+export const getInvoices = async () => {
+  const strikeApiFetch = useStrikeApi()
+  return await strikeApiFetch<StrikeInvoice[]>('/invoices', {
+    method: 'GET',
   })
 }
 
