@@ -1,10 +1,10 @@
 <script lang="ts" setup>
 import { useQRCode } from '@vueuse/integrations/useQRCode'
 import { nanoid } from 'nanoid'
-import type { StrikeAccountProfile, StrikeInvoice } from '~~/types/strike'
+import { cancelInvoice, createInvoice, createQuote, fetchProfileByHandle } from '~~/lib/strike/api'
+import type { StrikeAccountProfile, StrikeInvoice } from '~~/lib/strike/types'
 
-const { issueInvoice, issueQuoteForInvoice, cancelPendingInvoice, fetchPublicAccountProfileByHandle } = useStrikeApi()
-
+// TODO: if user using own API_KEY, check if given handle matches for the API_KEY account, otherwise payment will fail
 const accountHandle = useCookie<string>('tipbit_strike_account_handle')
 const { data: account } = useAsyncData<StrikeAccountProfile | undefined>(
   'strike:account',
@@ -12,7 +12,7 @@ const { data: account } = useAsyncData<StrikeAccountProfile | undefined>(
     if (!accountHandle.value) {
       return undefined
     }
-    return fetchPublicAccountProfileByHandle(accountHandle.value)
+    return fetchProfileByHandle(accountHandle.value)
   },
   {}
 )
@@ -52,7 +52,7 @@ const tip = async () => {
     return
   }
 
-  const invoice = await issueInvoice({
+  const invoice = await createInvoice({
     correlationId: nanoid(),
     description: 'tipbit invoice demo',
     amount: {
@@ -68,7 +68,7 @@ const tip = async () => {
   }
   invoiceId.value = invoice.invoiceId
 
-  const quote = await issueQuoteForInvoice(invoiceId.value)
+  const quote = await createQuote(invoiceId.value)
   console.log('quote', quote)
   if (!quote?.lnInvoice) {
     alert('Failed to create quote')
@@ -79,12 +79,12 @@ const tip = async () => {
   setIsInvoicePending(false)
 }
 
-const cancelInvoice = async () => {
+const cancelPendingInvoice = async () => {
   if (!invoiceId?.value) {
     alert('No invoice to cancel')
     return
   }
-  const canceledInvoice = await cancelPendingInvoice(invoiceId.value)
+  const canceledInvoice = await cancelInvoice(invoiceId.value)
   console.log('canceled invoice', canceledInvoice)
   if (canceledInvoice?.state === 'CANCELLED') {
     clearInvoice()
@@ -97,7 +97,7 @@ const fetchAccount = async () => {
     alert('Please enter a Strike account handle')
     return
   }
-  const fetchedAccount = await fetchPublicAccountProfileByHandle(accountHandle.value)
+  const fetchedAccount = await fetchProfileByHandle(accountHandle.value)
   if (!fetchedAccount) {
     alert('Failed to fetch account')
     return
@@ -203,7 +203,7 @@ const clearAccount = () => {
               <p readonly class="font-mono break-words">{{ lnInvoice }}</p>
 
               <div class="mt-auto flex justify-end gap-3">
-                <button class="rounded-sm bg-red-800/90 px-2 py-0.5 text-zinc-100" @click="cancelInvoice">
+                <button class="rounded-sm bg-red-800/90 px-2 py-0.5 text-zinc-100" @click="cancelPendingInvoice">
                   Cancel
                 </button>
                 <button class="rounded-sm bg-white/90 px-2 py-0.5 text-zinc-950" @click="copyInvoice()">

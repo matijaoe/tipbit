@@ -1,10 +1,11 @@
-// Request Types
+export type StrikeCurrency = 'BTC' | 'USD' | 'EUR' | 'USDT' | 'GBP'
+
 export type StrikeInvoiceAmount = {
   amount: string | number
   currency: StrikeCurrency
 }
 
-export type CreateInvoiceRequest = {
+export type StrikeCreateInvoiceRequest = {
   correlationId: string
   description: string
   amount: StrikeInvoiceAmount
@@ -12,7 +13,6 @@ export type CreateInvoiceRequest = {
 
 export type StrikeInvoiceState = 'UNPAID' | 'PAID' | 'CANCELLED' | 'EXPIRED'
 
-// Response Types
 export type StrikeInvoice = {
   invoiceId: string
   correlationId: string
@@ -23,14 +23,10 @@ export type StrikeInvoice = {
   lnInvoice?: string // Lightning Network Invoice (BOLT11)
 }
 
-// Quote Request Types
-export type CreateQuoteRequest = {
+export type StrikeCreateQuoteRequest = {
   descriptionHash?: string
 }
 
-export type StrikeCurrency = 'BTC' | 'USD' | 'EUR' | 'USDT' | 'GBP'
-
-// Quote Response Types
 export type StrikeCurrencyAmount = {
   amount: string
   currency: StrikeCurrency
@@ -42,7 +38,7 @@ export type StrikeConversionRate = {
   targetCurrency: StrikeCurrency
 }
 
-export type CreateQuoteResponse = {
+export type StrikeQuote = {
   quoteId: string
   description?: string
   lnInvoice: string
@@ -54,15 +50,14 @@ export type CreateQuoteResponse = {
   conversionRate: StrikeConversionRate
 }
 
-// Account Profile Types
-export interface StrikeSupportedCurrency {
+export type StrikeSupportedCurrency = {
   currency: StrikeCurrency
   isDefaultCurrency: boolean
   isAvailable: boolean
   isInvoiceable: boolean
 }
 
-export interface StrikeAccountProfile {
+export type StrikeAccountProfile = {
   id: string
   handle: string
   avatarUrl?: string

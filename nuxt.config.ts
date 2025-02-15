@@ -19,6 +19,7 @@ export default defineNuxtConfig({
     public: {
       // TODO: move out of public when moved to own server api
       strikeApiKey: process.env.STRIKE_API_KEY,
+      strikeApiUrl: process.env.STRIKE_API_URL,
     },
   },
 })
