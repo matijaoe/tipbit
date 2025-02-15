@@ -53,3 +53,20 @@ export type CreateQuoteResponse = {
   sourceAmount: StrikeCurrencyAmount
   conversionRate: StrikeConversionRate
 }
+
+// Account Profile Types
+export interface StrikeSupportedCurrency {
+  currency: StrikeCurrency
+  isDefaultCurrency: boolean
+  isAvailable: boolean
+  isInvoiceable: boolean
+}
+
+export interface StrikeAccountProfile {
+  id: string
+  handle: string
+  avatarUrl?: string
+  description?: string
+  canReceive: boolean
+  currencies: StrikeSupportedCurrency[]
+}

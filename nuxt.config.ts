@@ -12,6 +12,9 @@ export default defineNuxtConfig({
   vite: {
     plugins: [tailwindcss()],
   },
+  vueuse: {
+    autoImports: true,
+  },
   runtimeConfig: {
     public: {
       // TODO: move out of public when moved to own server api

@@ -1,78 +1,58 @@
 <script lang="ts" setup>
-import { useClipboard } from '@vueuse/core'
 import { useQRCode } from '@vueuse/integrations/useQRCode'
 import { nanoid } from 'nanoid'
-import type { CreateInvoiceRequest, CreateQuoteResponse, StrikeInvoice } from '~~/types/strike'
+import type { StrikeAccountProfile, StrikeInvoice } from '~~/types/strike'
+
+const { issueInvoice, issueQuoteForInvoice, cancelPendingInvoice, fetchPublicAccountProfileByHandle } = useStrikeApi()
+
+const accountHandle = useCookie<string>('tipbit_strike_account_handle')
+const { data: account } = useAsyncData<StrikeAccountProfile | undefined>(
+  'strike:account',
+  async () => {
+    if (!accountHandle.value) {
+      return undefined
+    }
+    return fetchPublicAccountProfileByHandle(accountHandle.value)
+  },
+  {}
+)
+
+watchEffect(() => {
+  console.log('account', account.value)
+})
 
 const satsAmount = ref<number>()
-const satsToBtc = (sats: number) => sats / 100_000_000
+
+const formattedSatsAmount = computed(() => formatAmount(satsAmount.value ?? 0))
 
 const invoiceId = ref<StrikeInvoice['invoiceId']>()
 const lnInvoice = ref<string>('')
 const lnInvoiceQr = useQRCode(lnInvoice)
-const { copy: copyInvoice, copied, isSupported } = useClipboard({ source: lnInvoice })
+const { copy: copyInvoice, copied } = useClipboard({ source: lnInvoice })
 
+const clearAmount = () => {
+  satsAmount.value = undefined
+}
 const clearInvoice = () => {
   invoiceId.value = undefined
   lnInvoice.value = ''
+  clearAmount()
 }
 
-const config = useRuntimeConfig()
-
-const strikeApiFetch = $fetch.create({
-  baseURL: 'https://api.strike.me/v1',
-  headers: {
-    Authorization: `Bearer ${config.public.strikeApiKey}`,
-  },
-})
-
-const issueStrikeInvoice = async (body: CreateInvoiceRequest) => {
-  try {
-    const invoice = await strikeApiFetch<StrikeInvoice>('/invoices', {
-      method: 'POST',
-      body,
-    })
-    return invoice
-  } catch (err) {
-    console.error(err)
-  }
-}
-
-const issueQuoteForInvoice = async (invoiceId: string) => {
-  try {
-    const invoice = await strikeApiFetch<CreateQuoteResponse>(`/invoices/${invoiceId}/quote`, {
-      method: 'POST',
-    })
-    return invoice
-  } catch (err) {
-    console.error(err)
-  }
-}
-
-const cancelPendingInvoice = async (invoiceId: string) => {
-  try {
-    return await strikeApiFetch<StrikeInvoice>(`/invoices/${invoiceId}/cancel`, {
-      method: 'PATCH',
-    })
-  } catch (err) {
-    console.error(err)
-  }
-}
-
-const isInvoicePending = ref(false)
+const [isInvoicePending, setIsInvoicePending] = useToggle(false)
 
 const tip = async () => {
-  isInvoicePending.value = true
+  setIsInvoicePending(true)
 
-  if (!satsAmount.value) {
+  const sats = satsAmount.value
+
+  if (!sats) {
     alert('Please enter an amount')
-    isInvoicePending.value = false
+    setIsInvoicePending(false)
     return
   }
-  const sats = satsAmount.value
-  satsAmount.value = undefined
 
-  const invoice = await issueStrikeInvoice({
+  const invoice = await issueInvoice({
     correlationId: nanoid(),
     description: 'tipbit invoice demo',
     amount: {
@@ -80,23 +60,23 @@ const tip = async () => {
       currency: 'BTC',
     },
   })
-  console.log(invoice)
+  console.log('invoice', invoice)
   if (!invoice?.invoiceId) {
     alert('Failed to create invoice')
-    isInvoicePending.value = false
+    setIsInvoicePending(false)
     return
   }
   invoiceId.value = invoice.invoiceId
 
   const quote = await issueQuoteForInvoice(invoiceId.value)
-  console.log(quote)
+  console.log('quote', quote)
   if (!quote?.lnInvoice) {
     alert('Failed to create quote')
-    isInvoicePending.value = false
+    setIsInvoicePending(false)
     return
   }
   lnInvoice.value = quote?.lnInvoice
-  isInvoicePending.value = false
+  setIsInvoicePending(false)
 }
 
 const cancelInvoice = async () => {
@@ -104,48 +84,147 @@ const cancelInvoice = async () => {
     alert('No invoice to cancel')
     return
   }
-  const res = await cancelPendingInvoice(invoiceId.value)
-  console.log(res)
-  if (res?.state === 'CANCELLED') {
+  const canceledInvoice = await cancelPendingInvoice(invoiceId.value)
+  console.log('canceled invoice', canceledInvoice)
+  if (canceledInvoice?.state === 'CANCELLED') {
     clearInvoice()
     alert('Invoice canceled')
   }
 }
+
+const fetchAccount = async () => {
+  if (!accountHandle.value) {
+    alert('Please enter a Strike account handle')
+    return
+  }
+  const fetchedAccount = await fetchPublicAccountProfileByHandle(accountHandle.value)
+  if (!fetchedAccount) {
+    alert('Failed to fetch account')
+    return
+  }
+  account.value = fetchedAccount
+}
+
+const downloadQrCode = () => {
+  const link = document.createElement('a')
+  link.href = lnInvoiceQr.value
+  link.download = 'invoice.png'
+  link.click()
+}
+
+const clearAccount = () => {
+  accountHandle.value = ''
+  account.value = undefined
+}
 </script>
 
 <template>
-  <div>
-    <div class="flex flex-col gap-5">
+  <div class="font-mono">
+    <div>
+      <form v-if="!account" class="flex gap-2" @submit.prevent="fetchAccount">
+        <input v-model="accountHandle" placeholder="Strike handle" class="rounded-sm bg-zinc-200/20 px-2 py-0.5" />
+        <button class="rounded-sm bg-white px-2 py-0.5 text-zinc-950" type="submit">Fetch Account</button>
+      </form>
+
+      <div v-if="account" class="flex items-center gap-5">
+        <div class="flex flex-col items-end gap-3">
+          <details>
+            <summary class="cursor-pointer">
+              <div class="inline-flex items-center gap-3">
+                <p>{{ account.handle }}@strike.me</p>
+                <img :src="account.avatarUrl" alt="Avatar" class="size-8 rounded-full" />
+              </div>
+            </summary>
+            <div class="space-y-2 overflow-auto px-3 py-1">
+              <div v-if="account.description">
+                <p class="font-bold">Description:</p>
+                <p>{{ account.description }}</p>
+              </div>
+              <div>
+                <p class="flex items-center gap-2">
+                  <span class="font-bold">Can receive:</span>
+                  <span class="font-bold">{{ account.canReceive ? '✅' : '❌' }}</span>
+                </p>
+              </div>
+              <div>
+                <p class="font-bold">Currencies:</p>
+                <div class="flex items-center gap-2">
+                  <span v-for="(currency, index) in account.currencies" :key="currency.currency">
+                    {{ currency.currency }}
+                    <span v-if="index !== account.currencies.length - 1"> / </span>
+                  </span>
+                </div>
+              </div>
+              <div>
+                <NuxtLink
+                  external
+                  :href="`https://strike.me/${account.handle}`"
+                  class="text-blue-400 hover:underline"
+                  target="_blank"
+                >
+                  strike.me/{{ account.handle }}
+                </NuxtLink>
+              </div>
+
+              <button class="rounded-sm bg-zinc-800/90 px-2 py-0.5 text-zinc-100" @click="clearAccount">
+                Clear Account
+              </button>
+            </div>
+          </details>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="account" class="mt-8 flex flex-col gap-5">
       <div class="flex gap-2">
         <input
           v-model.number="satsAmount"
-          class="bg-zinc-200/20 px-2 py-0.5"
+          :disabled="!!lnInvoice"
+          class="rounded-sm bg-zinc-200/20 px-2 py-0.5"
           type="number"
           placeholder="Tip amount (sats)"
         />
-        <button class="bg-white px-2 py-0.5 text-zinc-950" :disabled="!satsAmount" @click="tip">Tip</button>
+        <button class="rounded-sm bg-white px-2 py-0.5 text-zinc-950" :disabled="!satsAmount" @click="tip">Tip</button>
       </div>
 
       <div v-if="lnInvoice || isInvoicePending" class="max-w-2xl space-y-3">
-        <p>⚡ Lightning Invoice:</p>
+        <h2 class="text-xl">⚡ Lightning Invoice:</h2>
 
         <div v-if="isInvoicePending" class="animate-pulse">
           <p>Creating invoice...</p>
         </div>
 
         <div v-else>
-          <div class="grid grid-cols-2 gap-6">
+          <p class="text-xl">
+            <strong>{{ formattedSatsAmount }} sats</strong>
+          </p>
+          <div class="mt-4 grid grid-cols-2 gap-6">
             <div class="flex flex-col gap-4">
               <p readonly class="font-mono break-words">{{ lnInvoice }}</p>
 
               <div class="mt-auto flex justify-end gap-3">
-                <button class="bg-red-800 px-2 py-0.5 text-zinc-100" @click="cancelInvoice">Cancel</button>
-                <button class="bg-white px-2 py-0.5 text-zinc-950" @click="copyInvoice()">
-                  {{ copied ? 'Copied! 😎  ' : 'Copy invoice' }}
+                <button class="rounded-sm bg-red-800/90 px-2 py-0.5 text-zinc-100" @click="cancelInvoice">
+                  Cancel
+                </button>
+                <button class="rounded-sm bg-white/90 px-2 py-0.5 text-zinc-950" @click="copyInvoice()">
+                  {{ copied ? 'Copied!!! 😎' : 'Copy to clibpoard' }}
                 </button>
               </div>
             </div>
-            <img v-if="lnInvoiceQr" :src="lnInvoiceQr" alt="QR Code" />
+            <div class="flex flex-col gap-3">
+              <img
+                v-if="lnInvoiceQr"
+                id="invoice-qr"
+                :src="lnInvoiceQr"
+                alt="QR Code"
+                class="overflow-hidden rounded-sm"
+              />
+              <div>
+                <button class="rounded-sm bg-white/90 px-2 py-0.5 text-zinc-950" @click="downloadQrCode">
+                  Download QR
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
