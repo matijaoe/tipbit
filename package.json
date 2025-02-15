@@ -1,5 +1,5 @@
 {
-  "name": "nuxt-app",
+  "name": "tipbit",
   "private": true,
   "type": "module",
   "scripts": {
@@ -14,9 +14,12 @@
   "dependencies": {
     "@nuxt/eslint": "1.0.1",
     "@tailwindcss/vite": "^4.0.6",
+    "@vueuse/integrations": "^12.7.0",
+    "@vueuse/nuxt": "12.7.0",
     "eslint": "^9.0.0",
     "nanoid": "^5.1.0",
     "nuxt": "^3.15.4",
+    "qrcode": "^1",
     "tailwindcss": "^4.0.6",
     "vue": "latest",
     "vue-router": "latest"
