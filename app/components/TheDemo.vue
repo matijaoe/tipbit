@@ -1,9 +1,9 @@
 <script lang="ts" setup>
 import { useQRCode } from '@vueuse/integrations/useQRCode'
 import { nanoid } from 'nanoid'
+import { useToast } from '~/components/ui/toast'
 import { cancelInvoice, createInvoice, createQuote, fetchProfileByHandle, getInvoices } from '~~/lib/strike/api'
 import type { StrikeAccountProfile, StrikeInvoice } from '~~/lib/strike/types'
-import { useToast } from './ui/toast'
 
 // TODO: if user using own API_KEY, check if given handle matches for the API_KEY account, otherwise payment will fail
 const accountHandle = useCookie<string>('tipbit_strike_account_handle')
@@ -147,16 +147,17 @@ const downloadQrCode = () => {
 
 const invoices = ref<StrikeInvoice[]>([])
 
-const clearAccount = () => {
-  accountHandle.value = ''
-  account.value = undefined
-  invoices.value = []
-}
-
 const _getAccountInvoices = async () => {
   const fetchedInvoices = await getInvoices()
   console.log('fetchedInvoices', fetchedInvoices)
   invoices.value = fetchedInvoices
+}
+
+const clearAccount = () => {
+  accountHandle.value = ''
+  account.value = undefined
+  invoices.value = []
+  clearInvoice()
 }
 </script>
 
@@ -164,8 +165,8 @@ const _getAccountInvoices = async () => {
   <div class="max-w-lg px-5 font-mono">
     <section>
       <form v-if="!account" class="flex gap-2" @submit.prevent="fetchAccount">
-        <UiInput v-model="accountHandle" placeholder="Strike handle" class="w-sm" />
-        <UiButton variant="default">Fetch Account</UiButton>
+        <Input v-model="accountHandle" placeholder="Strike handle" class="w-sm" />
+        <Button variant="default">Fetch Account</Button>
       </form>
 
       <div v-if="account" class="flex items-center gap-5">
@@ -208,7 +209,7 @@ const _getAccountInvoices = async () => {
                 </NuxtLink>
               </div>
 
-              <UiButton variant="destructive" @click="clearAccount"> Clear Account </UiButton>
+              <Button variant="destructive" @click="clearAccount"> Clear Account </Button>
             </div>
           </details>
         </div>
@@ -217,10 +218,10 @@ const _getAccountInvoices = async () => {
 
     <div v-if="account">
       <section class="mt-8 flex flex-col gap-5">
-        <div class="flex gap-2">
-          <UiInput v-model.number="satsAmount" :disabled="!!lnInvoice" type="number" placeholder="Tip amount (sats)" />
-          <UiButton :disabled="!satsAmount" @click="tip"> Tip </UiButton>
-        </div>
+        <form class="flex gap-2" @submit.prevent="tip">
+          <Input v-model.number="satsAmount" :disabled="!!lnInvoice" type="number" placeholder="Tip amount (sats)" />
+          <Button :disabled="!satsAmount" @click="tip"> Tip </Button>
+        </form>
 
         <div v-if="isInvoicePending || lnInvoice">
           <div v-if="isInvoicePending" class="animate-pulse">
@@ -244,11 +245,11 @@ const _getAccountInvoices = async () => {
                 />
 
                 <div class="mt-auto flex flex-wrap justify-end gap-3">
-                  <UiButton variant="destructive" @click="cancelPendingInvoice">Cancel</UiButton>
-                  <UiButton variant="secondary" @click="downloadQrCode"> Download QR </UiButton>
-                  <UiButton @click="copyInvoice()">
+                  <Button variant="destructive" @click="cancelPendingInvoice">Cancel</Button>
+                  <Button variant="secondary" @click="downloadQrCode"> Download QR </Button>
+                  <Button @click="copyInvoice()">
                     {{ copied ? 'Copied!!! 😎' : 'Copy to clipboard' }}
-                  </UiButton>
+                  </Button>
                 </div>
               </div>
             </div>

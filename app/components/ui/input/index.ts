@@ -2,6 +2,8 @@ import type { VariantProps } from 'class-variance-authority'
 
 import { cva } from 'class-variance-authority'
 
+export { default as Input } from './Input.vue'
+
 export const inputVariants = cva(
   'flex rounded-md border border-input bg-transparent shadow-sm transition-colors file:border-0 file:bg-transparent  file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50',
   {

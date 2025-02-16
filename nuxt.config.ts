@@ -12,20 +12,17 @@ export default defineNuxtConfig({
   vueuse: {
     autoImports: true,
   },
-  typescript: {
-    tsConfig: {
-      compilerOptions: {
-        baseUrl: '.',
+  components: {
+    dirs: [
+      {
+        path: '~/components/ui',
+        enabled: true,
+        prefix: '',
+        extensions: ['.vue'],
       },
-    },
+      '~/components',
+    ],
   },
-  components: [
-    {
-      // dirty fix for duplicate imports for radix-vue
-      path: '~/components',
-      extensions: ['.vue'],
-    },
-  ],
   runtimeConfig: {
     public: {
       // TODO: move out of public when moved to own server api
