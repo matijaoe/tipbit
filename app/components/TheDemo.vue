@@ -1,8 +1,9 @@
 <script lang="ts" setup>
 import { useQRCode } from '@vueuse/integrations/useQRCode'
 import { nanoid } from 'nanoid'
-import { getInvoices, cancelInvoice, createInvoice, createQuote, fetchProfileByHandle } from '~~/lib/strike/api'
+import { cancelInvoice, createInvoice, createQuote, fetchProfileByHandle, getInvoices } from '~~/lib/strike/api'
 import type { StrikeAccountProfile, StrikeInvoice } from '~~/lib/strike/types'
+import { useToast } from './ui/toast'
 
 // TODO: if user using own API_KEY, check if given handle matches for the API_KEY account, otherwise payment will fail
 const accountHandle = useCookie<string>('tipbit_strike_account_handle')
@@ -37,13 +38,18 @@ const clearInvoice = () => {
 
 const [isInvoicePending, setIsInvoicePending] = useToggle(false)
 
+const { toast } = useToast()
+
 const tip = async () => {
   setIsInvoicePending(true)
 
   const sats = satsAmount.value
 
   if (!sats) {
-    alert('Please enter an amount')
+    toast({
+      title: 'Please enter an amount',
+      variant: 'default',
+    })
     setIsInvoicePending(false)
     return
   }
@@ -58,16 +64,23 @@ const tip = async () => {
   })
   console.log('invoice', invoice)
   if (!invoice?.invoiceId) {
-    alert('Failed to create invoice')
+    toast({
+      title: 'Failed to create invoice',
+      variant: 'destructive',
+    })
     setIsInvoicePending(false)
     return
   }
   invoiceId.value = invoice.invoiceId
 
   const quote = await createQuote(invoiceId.value)
+
   console.log('quote', quote)
   if (!quote?.lnInvoice) {
-    alert('Failed to create quote')
+    toast({
+      title: 'Failed to create quote',
+      variant: 'destructive',
+    })
     setIsInvoicePending(false)
     return
   }
@@ -77,28 +90,52 @@ const tip = async () => {
 
 const cancelPendingInvoice = async () => {
   if (!invoiceId?.value) {
-    alert('No invoice to cancel')
+    toast({
+      title: 'No invoice to cancel',
+      variant: 'default',
+    })
     return
   }
   const canceledInvoice = await cancelInvoice(invoiceId.value)
   console.log('canceled invoice', canceledInvoice)
   if (canceledInvoice?.state === 'CANCELLED') {
     clearInvoice()
-    alert('Invoice canceled')
+    toast({
+      title: 'Invoice canceled',
+      variant: 'destructive',
+    })
   }
 }
 
 const fetchAccount = async () => {
   if (!accountHandle.value) {
-    alert('Please enter a Strike account handle')
+    toast({
+      title: 'Please enter a Strike account handle',
+      variant: 'default',
+    })
     return
   }
-  const fetchedAccount = await fetchProfileByHandle(accountHandle.value)
-  if (!fetchedAccount) {
-    alert('Failed to fetch account')
-    return
+  try {
+    const fetchedAccount = await fetchProfileByHandle(accountHandle.value)
+    if (!fetchedAccount) {
+      toast({
+        title: 'Failed to fetch account',
+        variant: 'destructive',
+      })
+      return
+    }
+    account.value = fetchedAccount
+    toast({
+      title: 'Account connected',
+      variant: 'default',
+    })
+  } catch (err) {
+    console.error(err)
+    toast({
+      title: 'Account not found',
+      variant: 'destructive',
+    })
   }
-  account.value = fetchedAccount
 }
 
 const downloadQrCode = () => {
@@ -116,7 +153,7 @@ const clearAccount = () => {
   invoices.value = []
 }
 
-const getAccountInvoices = async () => {
+const _getAccountInvoices = async () => {
   const fetchedInvoices = await getInvoices()
   console.log('fetchedInvoices', fetchedInvoices)
   invoices.value = fetchedInvoices
@@ -124,11 +161,11 @@ const getAccountInvoices = async () => {
 </script>
 
 <template>
-  <div class="font-mono">
+  <div class="max-w-lg px-5 font-mono">
     <section>
       <form v-if="!account" class="flex gap-2" @submit.prevent="fetchAccount">
-        <input v-model="accountHandle" placeholder="Strike handle" class="rounded-sm bg-zinc-200/20 px-2 py-0.5" />
-        <button class="rounded-sm bg-white px-2 py-0.5 text-zinc-950" type="submit">Fetch Account</button>
+        <UiInput v-model="accountHandle" placeholder="Strike handle" class="w-sm" />
+        <UiButton variant="default">Fetch Account</UiButton>
       </form>
 
       <div v-if="account" class="flex items-center gap-5">
@@ -171,9 +208,7 @@ const getAccountInvoices = async () => {
                 </NuxtLink>
               </div>
 
-              <button class="rounded-sm bg-zinc-800/90 px-2 py-0.5 text-zinc-100" @click="clearAccount">
-                Clear Account
-              </button>
+              <UiButton variant="destructive" @click="clearAccount"> Clear Account </UiButton>
             </div>
           </details>
         </div>
@@ -183,54 +218,37 @@ const getAccountInvoices = async () => {
     <div v-if="account">
       <section class="mt-8 flex flex-col gap-5">
         <div class="flex gap-2">
-          <input
-            v-model.number="satsAmount"
-            :disabled="!!lnInvoice"
-            class="rounded-sm bg-zinc-200/20 px-2 py-0.5"
-            type="number"
-            placeholder="Tip amount (sats)"
-          />
-          <button class="rounded-sm bg-white px-2 py-0.5 text-zinc-950" :disabled="!satsAmount" @click="tip">
-            Tip
-          </button>
+          <UiInput v-model.number="satsAmount" :disabled="!!lnInvoice" type="number" placeholder="Tip amount (sats)" />
+          <UiButton :disabled="!satsAmount" @click="tip"> Tip </UiButton>
         </div>
 
-        <div v-if="lnInvoice || isInvoicePending" class="max-w-2xl space-y-3">
-          <h2 class="text-xl">⚡ Lightning Invoice:</h2>
-
+        <div v-if="isInvoicePending || lnInvoice">
           <div v-if="isInvoicePending" class="animate-pulse">
             <p>Creating invoice...</p>
           </div>
 
-          <div v-else>
-            <p class="text-xl">
-              <strong>{{ formattedSatsAmount }} sats</strong>
-            </p>
-            <div class="mt-4 grid grid-cols-2 gap-6">
-              <div class="flex flex-col gap-4">
-                <p readonly class="font-mono break-words">{{ lnInvoice }}</p>
+          <div v-else class="space-y-3">
+            <h2 class="text-xl">⚡ Lightning Invoice:</h2>
 
-                <div class="mt-auto flex justify-end gap-3">
-                  <button class="rounded-sm bg-red-800/90 px-2 py-0.5 text-zinc-100" @click="cancelPendingInvoice">
-                    Cancel
-                  </button>
-                  <button class="rounded-sm bg-white/90 px-2 py-0.5 text-zinc-950" @click="copyInvoice()">
-                    {{ copied ? 'Copied!!! 😎' : 'Copy to clibpoard' }}
-                  </button>
-                </div>
-              </div>
+            <p class="text-xl">
+              Tip <strong>{{ formattedSatsAmount }} sats</strong>
+            </p>
+            <div class="mt-4 max-w-xs">
               <div class="flex flex-col gap-3">
                 <img
                   v-if="lnInvoiceQr"
                   id="invoice-qr"
                   :src="lnInvoiceQr"
-                  alt="QR Code"
-                  class="overflow-hidden rounded-sm"
+                  alt="Invoice QR Code"
+                  class="overflow-hidden rounded-xl"
                 />
-                <div>
-                  <button class="rounded-sm bg-white/90 px-2 py-0.5 text-zinc-950" @click="downloadQrCode">
-                    Download QR
-                  </button>
+
+                <div class="mt-auto flex flex-wrap justify-end gap-3">
+                  <UiButton variant="destructive" @click="cancelPendingInvoice">Cancel</UiButton>
+                  <UiButton variant="secondary" @click="downloadQrCode"> Download QR </UiButton>
+                  <UiButton @click="copyInvoice()">
+                    {{ copied ? 'Copied!!! 😎' : 'Copy to clipboard' }}
+                  </UiButton>
                 </div>
               </div>
             </div>

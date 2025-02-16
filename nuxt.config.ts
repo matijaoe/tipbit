@@ -5,11 +5,27 @@ export default defineNuxtConfig({
   future: {
     compatibilityVersion: 4,
   },
+  experimental: {
+    typedPages: true,
+  },
   devtools: { enabled: true },
-  css: ['~/assets/css/main.css'],
   vueuse: {
     autoImports: true,
   },
+  typescript: {
+    tsConfig: {
+      compilerOptions: {
+        baseUrl: '.',
+      },
+    },
+  },
+  components: [
+    {
+      // dirty fix for duplicate imports for radix-vue
+      path: '~/components',
+      extensions: ['.vue'],
+    },
+  ],
   runtimeConfig: {
     public: {
       // TODO: move out of public when moved to own server api
