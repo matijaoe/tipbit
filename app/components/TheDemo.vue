@@ -14,10 +14,6 @@ const { data: account } = useAsyncData<StrikeAccountProfile | undefined>('strike
   return fetchProfileByHandle(accountHandle.value)
 })
 
-watchEffect(() => {
-  console.log('account', account.value)
-})
-
 const satsAmount = ref<number>()
 
 const formattedSatsAmount = computed(() => formatAmount(satsAmount.value ?? 0))
@@ -41,6 +37,7 @@ const [isInvoicePending, setIsInvoicePending] = useToggle(false)
 const { toast } = useToast()
 
 const tip = async () => {
+  console.log('tip')
   setIsInvoicePending(true)
 
   const sats = satsAmount.value
@@ -220,7 +217,7 @@ const clearAccount = () => {
       <section class="mt-8 flex flex-col gap-5">
         <form class="flex gap-2" @submit.prevent="tip">
           <Input v-model.number="satsAmount" :disabled="!!lnInvoice" type="number" placeholder="Tip amount (sats)" />
-          <Button :disabled="!satsAmount" @click="tip"> Tip </Button>
+          <Button :disabled="!satsAmount" type="submit"> Tip </Button>
         </form>
 
         <div v-if="isInvoicePending || lnInvoice">
