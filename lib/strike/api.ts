@@ -1,4 +1,11 @@
-import type { StrikeCreateInvoiceRequest, StrikeQuote, StrikeAccountProfile, StrikeInvoice } from '~~/lib/strike/types'
+import type {
+  StrikeAccountProfile,
+  StrikeCreateInvoiceRequest,
+  StrikeCreateReceiveRequest,
+  StrikeInvoice,
+  StrikeQuote,
+  StrikeReceiveRequest,
+} from '~~/lib/strike/types'
 
 const useStrikeApi = () => {
   const config = useRuntimeConfig()
@@ -66,6 +73,21 @@ export const fetchProfileByHandle = async (handle: string) => {
 export const fetchProfileById = async (id: string) => {
   const strikeApiFetch = useStrikeApi()
   return await strikeApiFetch<StrikeAccountProfile>(`/accounts/${id}/profile`, {
+    method: 'GET',
+  })
+}
+
+export const createReceiveRequest = async (body: StrikeCreateReceiveRequest) => {
+  const strikeApiFetch = useStrikeApi()
+  return await strikeApiFetch<StrikeReceiveRequest>('/receive-requests', {
+    method: 'POST',
+    body,
+  })
+}
+
+export const getReceiveRequest = async (receiveRequestId: string) => {
+  const strikeApiFetch = useStrikeApi()
+  return await strikeApiFetch<StrikeReceiveRequest>(`/receive_requests/${receiveRequestId}`, {
     method: 'GET',
   })
 }

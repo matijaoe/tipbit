@@ -66,29 +66,41 @@ export type StrikeAccountProfile = {
   currencies: StrikeSupportedCurrency[]
 }
 
-export type StrikeFeePolicy = 'INCLUSIVE' | 'EXCLUSIVE'
-
-export type StrikeCreateOnchainQuoteRequest = {
-  btcAddress: string
-  sourceCurrency: StrikeCurrency
-  description?: string
-  amount: StrikeInvoiceAmount
-  feePolicy?: StrikeFeePolicy
-  onchainTierId: string
+export type StrikeDecimalAmount = {
+  amount: string
+  currency: StrikeCurrency
 }
 
-export type StrikeOnchainQuote = {
-  paymentQuoteId: string
-  description?: string
-  validUntil?: string // ISO 8601 date-time
-  estimatedDeliveryDurationInMin?: number
-  conversionRate?: {
-    amount: string
-    sourceCurrency: StrikeCurrency
-    targetCurrency: StrikeCurrency
+export type StrikeCreateReceiveRequest = {
+  bolt11?: {
+    amount?: StrikeDecimalAmount
+    description?: string // 1 ≤ length ≤ 250
+    descriptionHash?: string // Hex string, overrides description if provided
+    expiryInSeconds?: number // int64, Lightning invoice expiry
+  } // Empty object for default Lightning config; omit for no Lightning invoice
+  onchain?: {
+    amount?: StrikeDecimalAmount
+    targetCurrency?: StrikeCurrency // Currency to convert received funds to
+  } // Empty object for default on-chain config; omit for no on-chain address
+}
+
+export type StrikeReceiveRequest = {
+  receiveRequestId: string // UUID
+  created: string // ISO 8601 date-time
+  targetCurrency?: StrikeCurrency // Optional, from onchain.targetCurrency
+  bolt11?: {
+    invoice: string // Bolt11 invoice string
+    requestedAmount?: StrikeDecimalAmount
+    btcAmount?: string // Converted BTC amount, optional
+    description?: string
+    descriptionHash?: string // Hex string
+    paymentHash: string // Hex string
+    expires: string // ISO 8601 date-time
   }
-  amount: StrikeCurrencyAmount
-  totalFee?: StrikeCurrencyAmount
-  totalAmount: StrikeCurrencyAmount
-  reward?: StrikeCurrencyAmount
+  onchain?: {
+    address: string // Bitcoin address
+    addressUri: string // Bitcoin URI
+    requestedAmount?: StrikeDecimalAmount
+    btcAmount?: string // Converted BTC amount, optional
+  }
 }
