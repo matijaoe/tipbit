@@ -1,9 +1,9 @@
 <script lang="ts" setup>
 import { useQRCode } from '@vueuse/integrations/useQRCode'
-import { nanoid } from 'nanoid'
-import { useToast } from '~/components/ui/toast'
-import { cancelInvoice, createInvoice, createQuote, fetchProfileByHandle, getInvoices } from '~~/lib/strike/api'
-import type { StrikeAccountProfile, StrikeInvoice } from '~~/lib/strike/types'
+import { cancelInvoice, fetchProfileByHandle, getInvoices } from '~~/lib/strike/api/api'
+import type { StrikeAccountProfile, StrikeInvoice } from '~~/lib/strike/api/types'
+import type { Invoice, InvoiceRequest } from '~~/lib/unified'
+import { useToast } from './ui/toast'
 
 // TODO: if user using own API_KEY, check if given handle matches for the API_KEY account, otherwise payment will fail
 const accountHandle = useCookie<string>('tipbit_strike_account_handle')
@@ -18,8 +18,8 @@ const satsAmount = ref<number>()
 
 const formattedSatsAmount = computed(() => formatAmount(satsAmount.value ?? 0))
 
-const invoiceId = ref<StrikeInvoice['invoiceId']>()
-const lnInvoice = ref<string>('')
+const invoiceId = ref<Invoice['invoiceId']>()
+const lnInvoice = ref<Invoice['lnInvoice']>('')
 const lnInvoiceQr = useQRCode(lnInvoice)
 const { copy: copyInvoice, copied } = useClipboard({ source: lnInvoice })
 
@@ -51,38 +51,33 @@ const tip = async () => {
     return
   }
 
-  const invoice = await createInvoice({
-    correlationId: nanoid(),
-    description: 'tipbit invoice demo',
-    amount: {
-      amount: satsToBtc(sats),
-      currency: 'BTC',
-    },
-  })
-  console.log('invoice', invoice)
-  if (!invoice?.invoiceId) {
+  try {
+    const invoice = await $fetch<Invoice>('/api/invoices', {
+      method: 'POST',
+      body: {
+        service: 'strike',
+        amount: {
+          amount: String(satsToBtc(sats)),
+          currency: 'BTC',
+        },
+        description: 'tipbit demo invoice',
+      } satisfies InvoiceRequest,
+    })
+
+    console.log(invoice)
+
+    invoiceId.value = invoice.invoiceId
+    lnInvoice.value = invoice.lnInvoice
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Failed to create invoice'
+    console.error('Failed to create invoice:', error)
     toast({
-      title: 'Failed to create invoice',
+      title: errorMessage,
       variant: 'destructive',
     })
+  } finally {
     setIsInvoicePending(false)
-    return
   }
-  invoiceId.value = invoice.invoiceId
-
-  const quote = await createQuote(invoiceId.value)
-
-  console.log('quote', quote)
-  if (!quote?.lnInvoice) {
-    toast({
-      title: 'Failed to create quote',
-      variant: 'destructive',
-    })
-    setIsInvoicePending(false)
-    return
-  }
-  lnInvoice.value = quote?.lnInvoice
-  setIsInvoicePending(false)
 }
 
 const cancelPendingInvoice = async () => {

@@ -1,8 +1,8 @@
 <script lang="ts" setup>
 import { useQRCode } from '@vueuse/integrations/useQRCode'
 import { useToast } from '~/components/ui/toast'
-import { createReceiveRequest, fetchProfileByHandle } from '~~/lib/strike/api'
-import type { StrikeAccountProfile, StrikeCreateReceiveRequest, StrikeDecimalAmount } from '~~/lib/strike/types'
+import { createReceiveRequest, fetchProfileByHandle } from '~~/lib/strike/api/api'
+import type { StrikeAccountProfile, StrikeCreateReceiveRequest, StrikeDecimalAmount } from '~~/lib/strike/api/types'
 
 // Track the Strike account handle via a cookie
 const accountHandle = useCookie<string>('tipbit_strike_account_handle')

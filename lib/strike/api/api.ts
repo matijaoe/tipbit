@@ -5,7 +5,7 @@ import type {
   StrikeInvoice,
   StrikeQuote,
   StrikeReceiveRequest,
-} from '~~/lib/strike/types'
+} from '~~/lib/strike/api/types'
 
 const useStrikeApi = () => {
   const config = useRuntimeConfig()
@@ -87,7 +87,7 @@ export const createReceiveRequest = async (body: StrikeCreateReceiveRequest) => 
 
 export const getReceiveRequest = async (receiveRequestId: string) => {
   const strikeApiFetch = useStrikeApi()
-  return await strikeApiFetch<StrikeReceiveRequest>(`/receive_requests/${receiveRequestId}`, {
+  return await strikeApiFetch<StrikeReceiveRequest>(`/receive-requests/${receiveRequestId}`, {
     method: 'GET',
   })
 }
