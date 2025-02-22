@@ -1,8 +1,9 @@
 <template>
-	<Body class="bg-zinc-900 text-zinc-50 container mx-auto p-4">
-		<NuxtRouteAnnouncer />
-		<main>
-			<Demo />
-		</main>
-	</Body>
+  <Body class="dark mx-auto p-5">
+    <NuxtRouteAnnouncer />
+    <NuxtLayout>
+      <NuxtPage />
+    </NuxtLayout>
+    <ToastToaster />
+  </Body>
 </template>

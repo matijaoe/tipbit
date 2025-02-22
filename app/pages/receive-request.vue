@@ -2,7 +2,6 @@
 
 <template>
   <div>
-    <h1>Demo</h1>
-    <p>This is a demo</p>
+    <StrikeReceiveRequest />
   </div>
 </template>
