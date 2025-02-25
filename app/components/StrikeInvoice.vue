@@ -26,7 +26,7 @@ const clearInvoice = () => {
   clearAmount()
 }
 
-const [isInvoicePending, setIsInvoicePending] = useToggle(false)
+const [_isInvoicePending, setIsInvoicePending] = useToggle(false)
 
 const { toast } = useToast()
 
@@ -138,31 +138,29 @@ const clearAccount = () => {
         </CardContent>
       </Card>
 
-      <Card v-else>
-        <CardContent class="pt-4">
-          <div class="flex max-w-xs flex-col gap-4">
-            <p class="text-xl">
-              Tip <strong>{{ formattedSatsAmount }} sats</strong>
-            </p>
+      <div v-else class="rounded-t-lg bg-card pt-4">
+        <div class="flex max-w-xs flex-col gap-4">
+          <p class="text-xl">
+            Tip <strong>{{ formattedSatsAmount }} sats</strong>
+          </p>
 
-            <img
-              v-if="lnInvoiceQr"
-              id="invoice-qr"
-              :src="lnInvoiceQr"
-              alt="Invoice QR Code"
-              class="overflow-hidden rounded-xl"
-            />
+          <img
+            v-if="lnInvoiceQr"
+            id="invoice-qr"
+            :src="lnInvoiceQr"
+            alt="Invoice QR Code"
+            class="overflow-hidden rounded-xl"
+          />
 
-            <div class="mt-auto flex flex-wrap justify-end gap-3">
-              <Button variant="destructive" @click="cancelPendingInvoice">Cancel</Button>
-              <Button variant="secondary" @click="downloadQrCode">Download QR</Button>
-              <Button @click="() => copyInvoice(lnInvoice)">
-                {{ copied ? 'Copied!!! 😎' : 'Copy to clipboard' }}
-              </Button>
-            </div>
+          <div class="mt-auto flex flex-wrap justify-end gap-3">
+            <Button size="sm" variant="destructive" @click="cancelPendingInvoice">Cancel</Button>
+            <Button size="sm" variant="secondary" @click="downloadQrCode">Download QR</Button>
+            <Button size="sm" @click="() => copyInvoice(lnInvoice)">
+              {{ copied ? 'Copied!!! 😎' : 'Copy to clipboard' }}
+            </Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   </div>
 </template>

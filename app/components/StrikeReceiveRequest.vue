@@ -3,6 +3,7 @@ import { useQRCode } from '@vueuse/integrations/useQRCode'
 import { useToast } from '~/components/ui/toast'
 import { createReceiveRequest } from '~~/lib/strike/api/api'
 import type { StrikeCreateReceiveRequest, StrikeDecimalAmount } from '~~/lib/strike/api/types'
+import { AnimatePresence, Motion } from 'motion-v'
 import StrikeAccountSelector from './StrikeAccountSelector.vue'
 
 const accountSelector = useTemplateRef('account-selector')
@@ -137,62 +138,72 @@ const clearAccount = () => {
         </CardContent>
       </Card>
 
-      <Card v-if="lnInvoice || onchainAddress">
-        <CardContent class="pt-4">
-          <Tabs v-model="activeTab" class="w-full">
-            <TabsList class="mb-4 grid w-fit grid-cols-2">
-              <TabsTrigger value="lightning">⚡ Lightning</TabsTrigger>
-              <TabsTrigger value="onchain">🔗 On-chain</TabsTrigger>
-            </TabsList>
+      <div v-if="lnInvoice || onchainAddress" class="rounded-lg bg-card pt-4">
+        <Tabs v-model="activeTab" class="w-full">
+          <TabsList class="mb-4 grid w-fit grid-cols-2">
+            <TabsTrigger value="lightning"> ⚡ Lightning </TabsTrigger>
+            <TabsTrigger value="onchain"> 🔗 On-chain </TabsTrigger>
+          </TabsList>
 
-            <TabsContent value="lightning" class="flex max-w-xs flex-col gap-4">
-              <p v-if="satsAmount" class="text-xl">
-                Tip <strong>{{ formattedSatsAmount }} sats</strong>
-              </p>
+          <div class="relative min-h-[300px] px-0 pt-4">
+            <AnimatePresence mode="wait">
+              <Motion
+                v-if="activeTab === 'lightning'"
+                key="lightning-tab"
+                :initial="{ x: -20, opacity: 0 }"
+                :animate="{ x: 0, opacity: 1 }"
+                :exit="{ x: -20, opacity: 0 }"
+                :transition="{ duration: 0.2 }"
+                class="flex w-full max-w-xs flex-col gap-4"
+              >
+                <p v-if="satsAmount" class="text-xl">
+                  Tip <strong>{{ formattedSatsAmount }} sats</strong>
+                </p>
 
-              <img
-                v-if="lnInvoiceQr"
-                id="invoice-qr"
-                :src="lnInvoiceQr"
-                alt="Invoice QR Code"
-                class="overflow-hidden rounded-xl"
-              />
+                <div v-if="lnInvoiceQr" id="invoice-qr" class="overflow-hidden rounded-xl">
+                  <img :src="lnInvoiceQr" alt="Invoice QR Code" />
+                </div>
 
-              <div class="mt-auto flex flex-wrap justify-end gap-3">
-                <Button variant="secondary" @click="downloadQrCode">Download QR</Button>
-                <Button @click="() => copyInvoice(lnInvoice)">
-                  {{ invoiceCopied ? 'Copied!!! 😎' : 'Copy to clipboard' }}
-                </Button>
-                <Button variant="destructive" @click="clearReceiveRequest">Reset</Button>
-              </div>
-            </TabsContent>
+                <div class="mt-auto flex flex-wrap justify-end gap-3">
+                  <Button size="sm" variant="secondary" @click="downloadQrCode">Download QR</Button>
+                  <Button size="sm" @click="() => copyInvoice(lnInvoice)">
+                    {{ invoiceCopied ? 'Copied!!! 😎' : 'Copy to clipboard' }}
+                  </Button>
+                  <Button size="sm" variant="destructive" @click="clearReceiveRequest">Reset</Button>
+                </div>
+              </Motion>
 
-            <TabsContent value="onchain" class="flex max-w-xs flex-col items-start gap-4">
-              <p v-if="satsAmount" class="text-xl">
-                Tip <strong>{{ formattedSatsAmount }} sats</strong>
-              </p>
+              <Motion
+                v-if="activeTab === 'onchain'"
+                key="onchain-tab"
+                :initial="{ x: 20, opacity: 0 }"
+                :animate="{ x: 0, opacity: 1 }"
+                :exit="{ x: 20, opacity: 0 }"
+                :transition="{ duration: 0.2 }"
+                class="flex w-full max-w-xs flex-col items-start gap-4"
+              >
+                <p v-if="satsAmount" class="text-xl">
+                  Tip <strong>{{ formattedSatsAmount }} sats</strong>
+                </p>
 
-              <img
-                v-if="onchainAddressQr"
-                id="onchain-qr"
-                :src="onchainAddressQr"
-                alt="Bitcoin Address QR Code"
-                class="overflow-hidden rounded-xl"
-              />
+                <div v-if="onchainAddressQr" id="onchain-qr" class="overflow-hidden rounded-xl">
+                  <img :src="onchainAddressQr" alt="Bitcoin Address QR Code" />
+                </div>
 
-              <p class="break-all">{{ onchainAddress }}</p>
+                <p class="break-all">{{ onchainAddress }}</p>
 
-              <div class="mt-auto flex flex-wrap justify-end gap-3">
-                <Button variant="secondary" @click="downloadQrCode">Download QR</Button>
-                <Button @click="() => copyAddress(onchainAddress)">
-                  {{ addressCopied ? 'Copied!!! 😎' : 'Copy to clipboard' }}
-                </Button>
-                <Button variant="destructive" @click="clearReceiveRequest">Reset</Button>
-              </div>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+                <div class="mt-auto flex flex-wrap justify-end gap-3">
+                  <Button size="sm" variant="secondary" @click="downloadQrCode">Download QR</Button>
+                  <Button size="sm" @click="() => copyAddress(onchainAddress)">
+                    {{ addressCopied ? 'Copied!!! 😎' : 'Copy to clipboard' }}
+                  </Button>
+                  <Button size="sm" variant="destructive" @click="clearReceiveRequest">Reset</Button>
+                </div>
+              </Motion>
+            </AnimatePresence>
+          </div>
+        </Tabs>
+      </div>
     </div>
   </div>
 </template>

@@ -1,19 +1,63 @@
-<script lang="ts" setup></script>
+<script lang="ts" setup>
+const { isAuthenticated, user, logout } = useAuth()
+</script>
 
 <template>
-  <div class="max-w-lg px-5">
+  <div class="container px-5">
     <header>
       <nav class="flex gap-5">
-        <NuxtLink to="/invoice" class="text-muted-foreground hover:underline" active-class="text-primary">
-          invoice
-        </NuxtLink>
-        <NuxtLink to="/receive-request" class="text-muted-foreground hover:underline" active-class="text-primary">
+        <NuxtLink to="/" class="text-muted-foreground hover:underline" active-class="text-primary">home</NuxtLink>
+
+        <NuxtLink to="/dashboard" class="text-muted-foreground hover:underline" active-class="text-primary"
+          >dashboard</NuxtLink
+        >
+
+        <NuxtLink to="/dashboard/invoice" class="text-muted-foreground hover:underline" active-class="text-primary"
+          >invoice</NuxtLink
+        >
+        <NuxtLink
+          to="/dashboard/receive-request"
+          class="text-muted-foreground hover:underline"
+          active-class="text-primary"
+        >
           receive request
         </NuxtLink>
       </nav>
     </header>
 
-    <main class="mt-8 font-mono">
+    <div class="mt-3">
+      <div v-if="isAuthenticated">
+        <p>Welcome, {{ user?.username }} ({{ user?.isSuperAdmin ? 'super-admin' : 'user' }})</p>
+        <template v-if="!user?.isSuperAdmin">
+          <NuxtLink
+            :to="`/${user?.username}`"
+            class="block text-muted-foreground hover:underline"
+            active-class="text-primary"
+            >my public page</NuxtLink
+          >
+        </template>
+
+        <div v-else class="flex gap-2">
+          <p>You are a super admin</p>
+          <NuxtLink to="/super-admin" class="text-muted-foreground hover:underline" active-class="text-primary">
+            super admin
+          </NuxtLink>
+        </div>
+
+        <div>
+          <Button @click="logout">Logout</Button>
+        </div>
+      </div>
+
+      <div v-else class="flex gap-5">
+        <NuxtLink to="/login" class="text-muted-foreground hover:underline" active-class="text-primary">login</NuxtLink>
+        <NuxtLink to="/register" class="text-muted-foreground hover:underline" active-class="text-primary">
+          register
+        </NuxtLink>
+      </div>
+    </div>
+
+    <main class="mt-8 max-w-lg font-mono">
       <slot />
     </main>
   </div>
