@@ -27,8 +27,16 @@ const { isAuthenticated, user, logout } = useAuth()
 
     <div class="mt-3">
       <div v-if="isAuthenticated">
-        <p>Welcome, {{ user?.username }} ({{ user?.isSuperAdmin ? 'super-admin' : 'user' }})</p>
-        <template v-if="!user?.isSuperAdmin">
+        <p>Welcome, {{ user?.username }} ({{ user?.role }})</p>
+
+        <div v-if="user?.role === 'super-admin'" class="flex gap-2">
+          <p>You are a super admin</p>
+          <NuxtLink to="/super-admin" class="text-muted-foreground hover:underline" active-class="text-primary">
+            super admin
+          </NuxtLink>
+        </div>
+
+        <template v-else-if="user?.role === 'user'">
           <NuxtLink
             :to="`/${user?.username}`"
             class="block text-muted-foreground hover:underline"
@@ -36,13 +44,6 @@ const { isAuthenticated, user, logout } = useAuth()
             >my public page</NuxtLink
           >
         </template>
-
-        <div v-else class="flex gap-2">
-          <p>You are a super admin</p>
-          <NuxtLink to="/super-admin" class="text-muted-foreground hover:underline" active-class="text-primary">
-            super admin
-          </NuxtLink>
-        </div>
 
         <div>
           <Button @click="logout">Logout</Button>

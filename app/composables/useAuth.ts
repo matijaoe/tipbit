@@ -1,17 +1,12 @@
 import { computed } from 'vue'
+import type { MockUser } from '~~/server/utils/mock-users'
 
 // In a real application, this would be connected to your backend authentication system
 // For now, we'll use a simple state management approach with Nuxt's useState
 
-type User = {
-  id: string
-  username: string
-  isSuperAdmin: boolean
-}
-
 export const useAuth = () => {
   // Use Nuxt's useState for SSR-friendly state management
-  const currentUser = useState<User | null>('currentUser', () => null)
+  const currentUser = useState<MockUser | null>('currentUser', () => null)
   const isLoading = useState<boolean>('authLoading', () => false)
 
   // Computed properties for auth state
@@ -22,27 +17,13 @@ export const useAuth = () => {
     isLoading.value = true
 
     try {
-      // In a real app, this would be an API call
-      await new Promise((resolve) => setTimeout(resolve, 500))
+      const userData = await $fetch(`/api/users/${username}`)
 
-      if (username === 'super-admin' && password === 'admin') {
-        currentUser.value = {
-          id: crypto.randomUUID(),
-          username,
-          isSuperAdmin: true,
-        }
-        return { success: true }
-      }
-
-      const userExists = await $fetch(`/api/users/${username}`)
+      console.log('👀 userData :', userData)
 
       // Always use 'admin' as password
-      if (userExists && password === 'admin') {
-        currentUser.value = {
-          id: crypto.randomUUID(),
-          username,
-          isSuperAdmin: username === 'super-admin',
-        }
+      if (userData && password === 'admin') {
+        currentUser.value = userData
         return { success: true }
       }
 
