@@ -1,5 +1,5 @@
 <template>
-  <Body class="dark mx-auto min-h-screen p-5">
+  <Body class="dark mx-auto min-h-screen">
     <NuxtRouteAnnouncer />
     <NuxtLayout>
       <NuxtPage />

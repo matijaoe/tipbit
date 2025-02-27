@@ -1,6 +1,7 @@
 import { eq } from 'drizzle-orm'
 import { createError, defineEventHandler, getRouterParam } from 'h3'
 import { isReservedRoute } from '~/utils/constants'
+import { users } from '~~/server/database/schema'
 
 /**
  * API endpoint to get user data by username
@@ -17,7 +18,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // Check if username is in protected routes
+  // Check if username is in reserved routes
   if (isReservedRoute(username)) {
     throw createError({
       statusCode: 404,
@@ -26,12 +27,9 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    const user = await useDB()
-      .select()
-      .from(tables.users)
-      .where(eq(tables.users.username, username))
-      .limit(1)
-      .then((res) => res[0] || null)
+    const user = await useDB().query.users.findFirst({
+      where: eq(users.username, username),
+    })
 
     return user
   } catch (error) {

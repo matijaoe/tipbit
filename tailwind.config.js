@@ -16,8 +16,8 @@ module.exports = {
     },
     extend: {
       fontFamily: {
-        sans: ['"Geist"', 'sans-serif'],
-        mono: ['"Geist Mono"', 'monospace'],
+        sans: ['"Inter"', 'sans-serif'],
+        mono: ['"JetBrains Mono"', 'monospace'],
       },
       colors: {
         border: 'hsl(var(--border))',

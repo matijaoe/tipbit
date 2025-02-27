@@ -1,45 +1,23 @@
 <script lang="ts" setup>
-import { useAuth } from '~/composables/useAuth'
+const { user } = useUserSession()
 
-const { isAuthenticated, logout } = useAuth()
-
-// Redirect non-authenticated users
-onMounted(() => {
-  if (!isAuthenticated.value) {
-    navigateTo('/login')
-  }
+definePageMeta({
+  layout: 'dashboard',
 })
-
-// Handle logout and navigation
-const handleLogout = () => {
-  logout()
-  navigateTo('/login')
-}
 </script>
 
 <template>
   <div>
-    <h1 class="mb-4 text-2xl font-bold">Admin Dashboard</h1>
+    <h2 class="mb-4 text-xl font-semibold">Dashboard Overview</h2>
 
-    <Card v-if="!isAuthenticated">
-      <CardHeader>
-        <CardTitle>You need to be authenticated to access this page.</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Button @click="navigateTo('/login')">Login</Button>
-      </CardContent>
-    </Card>
-
-    <Card v-else>
+    <Card>
       <CardHeader>
         <CardTitle>Welcome to your dashboard!</CardTitle>
       </CardHeader>
       <CardContent>
         <p>This is your personal dashboard area.</p>
+        <p v-if="user">Logged in as: {{ user.username }}</p>
       </CardContent>
-      <CardFooter>
-        <Button @click="handleLogout">Logout</Button>
-      </CardFooter>
     </Card>
   </div>
 </template>

@@ -5,6 +5,5 @@ import { defineEventHandler } from 'h3'
  * GET /api/users
  */
 export default defineEventHandler(async () => {
-  // Return all users
-  return useDB().select().from(tables.users)
+  return useDB().query.users.findMany()
 })

@@ -6,6 +6,6 @@ const client = createClient({
   url: process.env.DB_FILE_NAME!,
 })
 
-export const db = drizzle(client)
+export const db = drizzle(client, { schema })
 
 export { schema }

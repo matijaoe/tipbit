@@ -1,6 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  modules: ['@nuxt/eslint', '@vueuse/nuxt', '@nuxtjs/tailwindcss', 'motion-v/nuxt', 'nuxt-auth-utils'],
+  modules: ['@nuxt/eslint', '@vueuse/nuxt', '@nuxtjs/tailwindcss', 'motion-v/nuxt', 'nuxt-auth-utils', '@nuxt/fonts'],
   compatibilityDate: '2024-11-01',
   future: {
     compatibilityVersion: 4,
@@ -21,6 +21,18 @@ export default defineNuxtConfig({
         extensions: ['.vue'],
       },
       '~/components',
+    ],
+  },
+  fonts: {
+    families: [
+      {
+        name: 'Inter',
+        provider: 'google',
+      },
+      {
+        name: 'Inter Mono',
+        provider: 'google',
+      },
     ],
   },
   runtimeConfig: {
