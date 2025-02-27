@@ -13,16 +13,16 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
       })
     }
 
-    if (exists.role === 'super-admin') {
-      navigateTo('/super-admin')
+    if (exists.role === 'ADMIN') {
+      navigateTo('/admin')
     }
 
-    // TODO: Should allow admin page, but not public page
-    if (!exists.isEnabled) {
-      return createError({
-        statusCode: 403,
-        statusMessage: 'Public user page is disabled',
-      })
-    }
+    // // TODO: Should allow admin page, but not public page
+    // if (!exists.isEnabled) {
+    //   return createError({
+    //     statusCode: 403,
+    //     statusMessage: 'Public user page is disabled',
+    //   })
+    // }
   }
 })

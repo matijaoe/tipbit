@@ -1,7 +1,6 @@
+import { eq } from 'drizzle-orm'
 import { createError, defineEventHandler, getRouterParam } from 'h3'
-import { RESERVED_ROUTES } from '../../../app/utils/constants'
-import type { ReservedRoute } from '../../../app/utils/constants'
-import { mockUserDatabase } from '~~/server/utils/mock-users'
+import { isReservedRoute } from '~/utils/constants'
 
 /**
  * API endpoint to get user data by username
@@ -14,29 +13,32 @@ export default defineEventHandler(async (event) => {
   if (!username) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Username parameter is required',
+      message: 'Username is required',
     })
   }
 
   // Check if username is in protected routes
-  if (RESERVED_ROUTES.includes(username.toLowerCase() as ReservedRoute)) {
+  if (isReservedRoute(username)) {
     throw createError({
       statusCode: 404,
       statusMessage: 'This username is reserved',
     })
   }
 
-  // Find user in database
-  const user = mockUserDatabase.find((user) => user.username.toLowerCase() === username.toLowerCase())
+  try {
+    const user = await useDB()
+      .select()
+      .from(tables.users)
+      .where(eq(tables.users.username, username))
+      .limit(1)
+      .then((res) => res[0] || null)
 
-  // If user doesn't exist, return 404
-  if (!user) {
+    return user
+  } catch (error) {
+    console.error(`Error fetching user ${username}:`, error)
     throw createError({
-      statusCode: 404,
-      statusMessage: 'Username not found',
+      statusCode: 500,
+      message: 'Failed to fetch user data',
     })
   }
-
-  // Return user data
-  return user
 })

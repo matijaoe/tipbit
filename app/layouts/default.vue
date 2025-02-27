@@ -29,10 +29,10 @@ const { isAuthenticated, user, logout } = useAuth()
       <div v-if="isAuthenticated">
         <p>Welcome, {{ user?.username }} ({{ user?.role }})</p>
 
-        <div v-if="user?.role === 'super-admin'" class="flex gap-2">
-          <p>You are a super admin</p>
-          <NuxtLink to="/super-admin" class="text-muted-foreground hover:underline" active-class="text-primary">
-            super admin
+        <div v-if="user?.role === 'admin'" class="flex gap-2">
+          <p>You are a admin</p>
+          <NuxtLink to="/admin" class="text-muted-foreground hover:underline" active-class="text-primary">
+            admin
           </NuxtLink>
         </div>
 

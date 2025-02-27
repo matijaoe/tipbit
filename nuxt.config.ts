@@ -1,6 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  modules: ['@nuxt/eslint', '@vueuse/nuxt', '@nuxtjs/tailwindcss', 'motion-v/nuxt'],
+  modules: ['@nuxt/eslint', '@vueuse/nuxt', '@nuxtjs/tailwindcss', 'motion-v/nuxt', 'nuxt-auth-utils'],
   compatibilityDate: '2024-11-01',
   future: {
     compatibilityVersion: 4,
@@ -29,5 +29,6 @@ export default defineNuxtConfig({
       strikeApiKey: process.env.STRIKE_API_KEY,
       strikeApiUrl: process.env.STRIKE_API_URL,
     },
+    dbFileName: process.env.DB_FILE_NAME,
   },
 })
