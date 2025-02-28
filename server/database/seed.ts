@@ -32,6 +32,7 @@ async function main() {
   // Create profiles for all users
   const profilesData: ProfileInsert[] = insertedUsers.map((user) => ({
     userId: user.id,
+    handle: user.username,
     displayName: user.username,
     isPublic: true,
   }))

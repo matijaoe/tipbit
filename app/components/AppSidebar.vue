@@ -1,26 +1,46 @@
 <script setup lang="ts">
-import { LayoutDashboard, FileText, Inbox, LogOut } from 'lucide-vue-next'
+import { LayoutDashboard, FileText, Inbox, Globe, Users } from 'lucide-vue-next'
+import type { RouteLocationRaw } from 'vue-router'
+import AppSidebarUserSwitcher from './AppSidebarUserSwitcher.vue'
 
-const { user, clear } = useUserSession()
+const { user } = useUserSession()
+const username = computed(() => user?.value?.username ?? '')
 
-const handleLogout = async () => {
-  await clear()
-  navigateTo('/login')
+type MenuItem = {
+  title: string
+  url: RouteLocationRaw
+  icon: Component
 }
 
-const menuItems = [
+const menuItems = computed<MenuItem[]>(() => [
   {
-    title: 'Overview',
+    title: 'Dashboard',
     url: '/dashboard',
     icon: LayoutDashboard,
   },
+  {
+    title: 'Connections',
+    url: '/dashboard/connections',
+    icon: Users,
+  },
+])
+
+const publicItems: MenuItem[] = [
+  {
+    title: 'Public Page',
+    url: `/${username.value}`,
+    icon: Globe,
+  },
+]
+
+const invoiceItems: MenuItem[] = [
   {
     title: 'Invoice',
     url: '/dashboard/invoice',
     icon: FileText,
   },
   {
-    title: 'Receive Request',
+    title: 'Receive Requests',
     url: '/dashboard/receive-request',
     icon: Inbox,
   },
@@ -28,12 +48,31 @@ const menuItems = [
 </script>
 
 <template>
-  <Sidebar>
+  <Sidebar c>
     <SidebarHeader>
-      <span class="p-2"> tipbit </span>
+      <div class="flex items-center gap-2 p-2">
+        <img src="https://img.logoipsum.com/359.svg" alt="Tipbit Logo" class="h-5 w-auto shrink-0" />
+        <span class="font-mono text-xl font-medium italic tracking-wider"> tipbit </span>
+      </div>
     </SidebarHeader>
 
     <SidebarContent>
+      <SidebarGroup>
+        <SidebarGroupLabel>Public</SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            <SidebarMenuItem v-for="item in publicItems" :key="item.title">
+              <SidebarMenuButton as-child>
+                <NuxtLink :to="item.url">
+                  <component :is="item.icon" />
+                  <span>{{ item.title }}</span>
+                </NuxtLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+
       <SidebarGroup>
         <SidebarGroupLabel>Navigation</SidebarGroupLabel>
         <SidebarGroupContent>
@@ -49,20 +88,26 @@ const menuItems = [
           </SidebarMenu>
         </SidebarGroupContent>
       </SidebarGroup>
+
+      <SidebarGroup>
+        <SidebarGroupLabel>Invoices</SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            <SidebarMenuItem v-for="item in invoiceItems" :key="item.title">
+              <SidebarMenuButton as-child>
+                <NuxtLink :to="item.url">
+                  <component :is="item.icon" />
+                  <span>{{ item.title }}</span>
+                </NuxtLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
     </SidebarContent>
 
     <SidebarFooter>
-      <div class="flex items-center justify-between px-4 py-2">
-        <div class="flex items-center gap-2">
-          <div class="h-8 w-8 rounded-full bg-primary text-center leading-8 text-primary-foreground">
-            {{ user?.username?.charAt(0).toUpperCase() }}
-          </div>
-          <span>{{ user?.username }}</span>
-        </div>
-        <Button variant="ghost" size="icon" @click="handleLogout">
-          <LogOut />
-        </Button>
-      </div>
+      <AppSidebarUserSwitcher />
     </SidebarFooter>
   </Sidebar>
 </template>

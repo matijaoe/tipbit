@@ -1,7 +1,25 @@
-<script lang="ts" setup></script>
+<script lang="ts" setup>
+import { Button } from '@/components/ui/button'
+
+const { user } = useUserSession()
+
+// TODO: check if own profile
+</script>
 
 <template>
-  <main>
-    <slot />
-  </main>
+  <div class="container p-4">
+    <header class="absolute inset-3">
+      <Button v-if="user" as-child variant="link" class="font-light">
+        <NuxtLink to="/dashboard"> Your dashboard </NuxtLink>
+      </Button>
+
+      <Button v-else as-child variant="link" class="font-light">
+        <NuxtLink to="/login"> Join </NuxtLink>
+      </Button>
+    </header>
+
+    <main class="mx-auto mt-[12vh] max-w-lg">
+      <slot />
+    </main>
+  </div>
 </template>

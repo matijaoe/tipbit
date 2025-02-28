@@ -11,6 +11,7 @@ const AuthProviders = ['github'] as const
 export const users = sqliteTable('users', {
   id: text('id').primaryKey().$defaultFn(generateUUID),
   username: text('username').notNull().unique(),
+  avatarUrl: text('avatar_url'),
   role: text('role', { enum: Roles }).default(Roles[0]).notNull(),
   createdAt: integer('created_at', { mode: 'timestamp' })
     .notNull()
@@ -24,11 +25,13 @@ export const profiles = sqliteTable('profiles', {
   userId: text('user_id')
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
+  handle: text('handle').notNull().unique(),
   displayName: text('display_name').notNull().unique(),
   isPublic: integer('is_public', { mode: 'boolean' }).default(true),
   createdAt: integer('created_at', { mode: 'timestamp' })
     .notNull()
     .$defaultFn(() => new Date()),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
 })
 
 // OAuth connections

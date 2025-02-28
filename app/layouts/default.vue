@@ -14,7 +14,7 @@ const routes: { name: string; path: RouteLocationRaw }[] = [
 </script>
 
 <template>
-  <div class="container p-5">
+  <div class="container p-4">
     <header>
       <nav class="flex gap-5">
         <NuxtLink
@@ -24,8 +24,8 @@ const routes: { name: string; path: RouteLocationRaw }[] = [
           class="text-muted-foreground hover:underline"
           active-class="text-primary"
         >
-          {{ route.name }}</NuxtLink
-        >
+          {{ route.name }}
+        </NuxtLink>
       </nav>
     </header>
 
