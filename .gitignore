@@ -24,7 +24,6 @@ logs
 !.env.example
 
 # Database
-data.db
 *.db
 *.sqlite
 *.sqlite3
