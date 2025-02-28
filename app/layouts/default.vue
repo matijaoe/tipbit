@@ -1,23 +1,31 @@
+<script lang="ts" setup>
+import type { RouteLocationRaw } from 'vue-router'
+
+const routes: { name: string; path: RouteLocationRaw }[] = [
+  {
+    name: 'login',
+    path: '/login',
+  },
+  {
+    name: 'register',
+    path: '/register',
+  },
+]
+</script>
+
 <template>
   <div class="container p-5">
     <header>
       <nav class="flex gap-5">
-        <NuxtLink to="/" class="text-muted-foreground hover:underline" active-class="text-primary">home</NuxtLink>
-
-        <NuxtLink to="/dashboard" class="text-muted-foreground hover:underline" active-class="text-primary"
-          >dashboard</NuxtLink
-        >
-
-        <NuxtLink to="/dashboard/invoice" class="text-muted-foreground hover:underline" active-class="text-primary"
-          >invoice</NuxtLink
-        >
         <NuxtLink
-          to="/dashboard/receive-request"
+          v-for="route in routes"
+          :key="route.name"
+          :to="route.path"
           class="text-muted-foreground hover:underline"
           active-class="text-primary"
         >
-          receive request
-        </NuxtLink>
+          {{ route.name }}</NuxtLink
+        >
       </nav>
     </header>
 

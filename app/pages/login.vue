@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-const { openInPopup, loggedIn, user, ready } = useUserSession()
+const { openInPopup, loggedIn, user } = useUserSession()
 
 const handleLogin = async () => {
   openInPopup('/api/auth/github', {
@@ -14,7 +14,7 @@ whenever(user, () => {
 </script>
 
 <template>
-  <div>
+  <div class="space-y-3">
     <p>Logged in: {{ loggedIn }}</p>
     <Button @click="handleLogin">Login with Github</Button>
     <pre>{{ user }}</pre>
