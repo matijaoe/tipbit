@@ -2,7 +2,7 @@
  * List of reserved routes that should not be accessible as usernames
  * Used in route protection middleware and username validation
  */
-export const RESERVED_ROUTES = ['dashboard', 'login', 'register'] as const
+export const RESERVED_ROUTES = ['dashboard', 'login', 'register', 'admin'] as const
 
 /**
  * Type definition for reserved routes

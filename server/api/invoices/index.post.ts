@@ -8,6 +8,8 @@ export default defineEventHandler<{
   body: InvoiceRequest
   response: Invoice
 }>(async (event) => {
+  await requireUserSession(event)
+
   const body = await readBody(event)
 
   try {

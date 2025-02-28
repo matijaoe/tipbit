@@ -1,7 +1,22 @@
 import { eq } from 'drizzle-orm'
-import { createError, defineEventHandler, getRouterParam } from 'h3'
+import { createError, defineEventHandler } from 'h3'
+import { z, ZodError } from 'zod'
 import { isReservedRoute } from '~/utils/constants'
 import { users } from '~~/server/database/schema'
+
+const paramsSchema = z.object({
+  username: z
+    .string()
+    .min(3, 'Username must be at least 3 characters')
+    .max(30, 'Username cannot exceed 30 characters')
+    .regex(/^[a-zA-Z0-9_-]+$/, 'Username can only contain letters, numbers, underscores and hyphens')
+    .refine((username) => !isReservedRoute(username), {
+      message: 'This username is reserved keyword and cannot be used',
+      params: {
+        statusCode: 404,
+      },
+    }),
+})
 
 /**
  * API endpoint to get user data by username
@@ -9,34 +24,20 @@ import { users } from '~~/server/database/schema'
  * GET /api/users/:username
  */
 export default defineEventHandler(async (event) => {
-  const username = getRouterParam(event, 'username')
+  await requireUserSession(event)
 
-  if (!username) {
-    throw createError({
-      statusCode: 400,
-      message: 'Username is required',
-    })
-  }
+  const { username } = await getValidatedRouterParams(event, paramsSchema.parse)
 
-  // Check if username is in reserved routes
-  if (isReservedRoute(username)) {
+  const user = await useDB().query.users.findFirst({
+    where: eq(users.username, username),
+  })
+
+  if (!user) {
     throw createError({
       statusCode: 404,
-      statusMessage: 'This username is reserved',
+      message: 'User not found',
     })
   }
 
-  try {
-    const user = await useDB().query.users.findFirst({
-      where: eq(users.username, username),
-    })
-
-    return user
-  } catch (error) {
-    console.error(`Error fetching user ${username}:`, error)
-    throw createError({
-      statusCode: 500,
-      message: 'Failed to fetch user data',
-    })
-  }
+  return user
 })
