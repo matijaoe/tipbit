@@ -5,7 +5,7 @@ useSeoMeta({
 </script>
 
 <template>
-  <Body class="dark mx-auto min-h-screen">
+  <Body class="mx-auto min-h-screen">
     <NuxtRouteAnnouncer />
 
     <NuxtLayout>

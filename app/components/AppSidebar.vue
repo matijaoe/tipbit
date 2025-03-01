@@ -56,7 +56,7 @@ const adminItems: MenuItem[] = [
 </script>
 
 <template>
-  <Sidebar>
+  <Sidebar variant="floating" class="pr-0">
     <SidebarHeader>
       <div class="flex items-center gap-2 p-2">
         <img src="https://img.logoipsum.com/359.svg" alt="Tipbit Logo" class="h-5 w-auto shrink-0" />
