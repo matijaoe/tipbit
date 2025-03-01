@@ -21,14 +21,15 @@ whenever(ready, () => {
 
 <template>
   <div class="space-y-3">
-    <Card>
+    <Card class="max-w-xs">
       <CardHeader>
         <CardTitle>Login</CardTitle>
       </CardHeader>
       <CardContent>
         <div class="flex flex-col gap-2">
-          <Button :is-loading="loadingProvider === 'github'" @click="handleLogin('github')"> Login with GitHub </Button>
-          <Button :is-loading="loadingProvider === 'google'" @click="handleLogin('google')"> Login with Google </Button>
+          <Button :loading="loadingProvider === 'github'" @click="handleLogin('github')"> Login with GitHub </Button>
+          <Button :loading="loadingProvider === 'google'" @click="handleLogin('google')"> Login with Google </Button>
+          <Button :loading="loadingProvider === 'x'" @click="handleLogin('x')"> Login with X </Button>
         </div>
       </CardContent>
     </Card>

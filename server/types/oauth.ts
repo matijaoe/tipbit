@@ -91,3 +91,23 @@ export type GoogleOAuthUser = {
   /** Whether the email has been verified by Google */
   email_verified: boolean
 }
+
+/**
+ * X (Twitter) OAuth user response type
+ */
+export type XOAuthUser = {
+  /** The user's X (Twitter) handle */
+  username: string
+  /** The user's unique X (Twitter) ID */
+  id: string
+  /** URL to the user's X (Twitter) profile picture */
+  profile_image_url: string
+  /** The type of verification the user has */
+  verified_type: string
+  /** The user's X (Twitter) bio/description */
+  description: string
+  /** The user's display name */
+  name: string
+  /** Whether the user is verified */
+  verified: boolean
+}

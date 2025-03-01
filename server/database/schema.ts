@@ -6,7 +6,7 @@ import { randomUUID } from 'crypto'
 const Roles = ['USER', 'ADMIN'] as const
 export type Role = (typeof Roles)[number]
 
-const AuthProviders = ['github', 'google'] as const
+const AuthProviders = ['github', 'google', 'x'] as const
 export type AuthProvider = (typeof AuthProviders)[number]
 
 // Core user entity

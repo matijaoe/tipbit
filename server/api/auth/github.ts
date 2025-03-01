@@ -3,8 +3,6 @@ import { handleOAuthLogin } from '~~/server/utils/auth'
 
 export default defineOAuthGitHubEventHandler({
   async onSuccess(event, { user: githubUser }: { user: GitHubOAuthUser }) {
-    console.log('🔥 githubUser', githubUser)
-
     try {
       return await handleOAuthLogin(event, {
         id: githubUser.id.toString(),
