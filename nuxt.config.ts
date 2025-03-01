@@ -1,6 +1,20 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  modules: ['@nuxt/eslint', '@vueuse/nuxt', '@nuxtjs/tailwindcss', 'motion-v/nuxt', 'nuxt-auth-utils', '@nuxt/fonts'],
+  modules: [
+    '@nuxt/eslint',
+    '@vueuse/nuxt',
+    '@nuxtjs/tailwindcss',
+    'motion-v/nuxt',
+    'nuxt-auth-utils',
+    '@nuxt/fonts',
+    '@nuxtjs/color-mode',
+  ],
+  colorMode: {
+    classSuffix: '',
+    preference: 'system',
+    fallback: 'dark',
+    storage: 'cookie',
+  },
   compatibilityDate: '2024-11-01',
   future: {
     compatibilityVersion: 4,

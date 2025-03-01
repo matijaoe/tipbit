@@ -1,16 +1,19 @@
 import { relations } from 'drizzle-orm'
 import { integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core'
+import { randomUUID } from 'crypto'
 
-const generateUUID = () => crypto.randomUUID()
-
-// TODO: move to constants
+// TODO: move to constants or type
 const Roles = ['USER', 'ADMIN'] as const
 export type Role = (typeof Roles)[number]
-const AuthProviders = ['github'] as const
+
+const AuthProviders = ['github', 'google'] as const
+export type AuthProvider = (typeof AuthProviders)[number]
 
 // Core user entity
 export const users = sqliteTable('users', {
-  id: text('id').primaryKey().$defaultFn(generateUUID),
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => randomUUID()),
   username: text('username').notNull().unique(),
   avatarUrl: text('avatar_url'),
   role: text('role', { enum: Roles }).default(Roles[0]).notNull(),
@@ -22,12 +25,14 @@ export const users = sqliteTable('users', {
 
 // Multiple profiles per user
 export const profiles = sqliteTable('profiles', {
-  id: text('id').primaryKey().$defaultFn(generateUUID),
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => randomUUID()),
   userId: text('user_id')
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
   handle: text('handle').notNull().unique(),
-  displayName: text('display_name').notNull().unique(),
+  displayName: text('display_name').notNull(),
   isPublic: integer('is_public', { mode: 'boolean' }).default(true),
   createdAt: integer('created_at', { mode: 'timestamp' })
     .notNull()
@@ -39,7 +44,9 @@ export const profiles = sqliteTable('profiles', {
 export const authConnections = sqliteTable(
   'auth_connections',
   {
-    id: text('id').primaryKey().$defaultFn(generateUUID),
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => randomUUID()),
     userId: text('user_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
