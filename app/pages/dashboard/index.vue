@@ -7,7 +7,7 @@ definePageMeta({
 </script>
 
 <template>
-  <div>
+  <div class="max-w-lg">
     <h2 class="mb-4 text-xl font-semibold">Dashboard Overview</h2>
 
     <Card>
@@ -16,7 +16,7 @@ definePageMeta({
       </CardHeader>
       <CardContent>
         <p>This is your personal dashboard area.</p>
-        <p v-if="user">Logged in as: {{ user.username }}</p>
+        <p v-if="user">Logged in as: @{{ user.username }}</p>
       </CardContent>
     </Card>
   </div>

@@ -5,6 +5,7 @@ const generateUUID = () => crypto.randomUUID()
 
 // TODO: move to constants
 const Roles = ['USER', 'ADMIN'] as const
+export type Role = (typeof Roles)[number]
 const AuthProviders = ['github'] as const
 
 // Core user entity

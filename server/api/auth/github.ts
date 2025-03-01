@@ -64,6 +64,7 @@ export default defineOAuthGitHubEventHandler({
           id: user.id,
           username: user.username,
           role: user.role,
+          avatarUrl: user.avatarUrl ?? undefined,
         },
         loggedInAt: new Date(),
       })

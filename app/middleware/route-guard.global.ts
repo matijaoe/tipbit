@@ -13,7 +13,6 @@ const isAuthRoute = (to: RouteLocation) => {
 export default defineNuxtRouteMiddleware(async (to) => {
   const { loggedIn } = useUserSession()
 
-  // Special handling for index route - redirect to login or dashboard
   if (to.path === '/') {
     if (loggedIn.value) {
       return navigateTo('/dashboard')
@@ -38,7 +37,6 @@ export default defineNuxtRouteMiddleware(async (to) => {
     return
   }
 
-  // If user is logged in and trying to access a public route, redirect to dashboard
   if (loggedIn.value && isPublicRoute(to.name as string)) {
     return navigateTo('/dashboard')
   }

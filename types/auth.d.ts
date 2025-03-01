@@ -1,4 +1,4 @@
-import type { Role } from './server/utils/mock-users'
+import type { Role } from '~~/server/database/schema'
 
 // auth.d.ts
 declare module '#auth-utils' {
@@ -6,6 +6,7 @@ declare module '#auth-utils' {
     id: string
     username: string
     role: Role
+    avatarUrl?: string
   }
 
   // eslint-disable-next-line @typescript-eslint/no-empty-object-type

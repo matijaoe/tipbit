@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { LayoutDashboard, FileText, Inbox, Globe, Users } from 'lucide-vue-next'
+import { LayoutDashboard, FileText, Inbox, Globe, Users, ArrowUpRight } from 'lucide-vue-next'
 import type { RouteLocationRaw } from 'vue-router'
 import AppSidebarUserSwitcher from './AppSidebarUserSwitcher.vue'
 
@@ -45,10 +45,18 @@ const invoiceItems: MenuItem[] = [
     icon: Inbox,
   },
 ]
+
+const adminItems: MenuItem[] = [
+  {
+    title: 'Users',
+    url: '/dashboard/admin/users',
+    icon: Users,
+  },
+]
 </script>
 
 <template>
-  <Sidebar c>
+  <Sidebar>
     <SidebarHeader>
       <div class="flex items-center gap-2 p-2">
         <img src="https://img.logoipsum.com/359.svg" alt="Tipbit Logo" class="h-5 w-auto shrink-0" />
@@ -58,14 +66,16 @@ const invoiceItems: MenuItem[] = [
 
     <SidebarContent>
       <SidebarGroup>
-        <SidebarGroupLabel>Public</SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarMenu>
-            <SidebarMenuItem v-for="item in publicItems" :key="item.title">
+            <SidebarMenuItem>
               <SidebarMenuButton as-child>
-                <NuxtLink :to="item.url">
-                  <component :is="item.icon" />
-                  <span>{{ item.title }}</span>
+                <NuxtLink :to="`/${username}`">
+                  <Globe />
+                  <div class="leading flex w-full items-center justify-between gap-2">
+                    <span>Public page</span>
+                    <Badge size="sm" variant="secondary">external</Badge>
+                  </div>
                 </NuxtLink>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -94,6 +104,22 @@ const invoiceItems: MenuItem[] = [
         <SidebarGroupContent>
           <SidebarMenu>
             <SidebarMenuItem v-for="item in invoiceItems" :key="item.title">
+              <SidebarMenuButton as-child>
+                <NuxtLink :to="item.url">
+                  <component :is="item.icon" />
+                  <span>{{ item.title }}</span>
+                </NuxtLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+
+      <SidebarGroup v-if="user?.role === 'ADMIN'">
+        <SidebarGroupLabel>Admin</SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            <SidebarMenuItem v-for="item in adminItems" :key="item.title">
               <SidebarMenuButton as-child>
                 <NuxtLink :to="item.url">
                   <component :is="item.icon" />

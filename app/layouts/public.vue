@@ -8,7 +8,7 @@ const { user } = useUserSession()
 
 <template>
   <div class="container p-4">
-    <header class="absolute inset-3">
+    <header class="absolute left-0 top-3">
       <Button v-if="user" as-child variant="link" class="font-light">
         <NuxtLink to="/dashboard"> Your dashboard </NuxtLink>
       </Button>

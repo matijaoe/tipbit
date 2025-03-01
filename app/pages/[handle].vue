@@ -4,13 +4,13 @@ import { useRouteParams } from '@vueuse/router'
 const handle = useRouteParams('handle')
 
 definePageMeta({
-  middleware: ['user'],
   layout: 'public',
 })
 
-// Restrict info that is fetched
 const { data: profileData } = await useFetch(() => `/api/profiles/${handle.value}`, {
   pick: ['id', 'handle', 'displayName', 'isPublic'],
+  key: `profile:${handle.value}`,
+  dedupe: 'defer',
 })
 </script>
 

@@ -1,4 +1,6 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+// TODO: figure out best place to load user data
+</script>
 
 <template>
   <SidebarProvider>
@@ -9,7 +11,7 @@
         <SidebarTrigger />
       </header>
 
-      <main class="max-w-lg flex-1 p-6">
+      <main class="flex-1 p-6">
         <slot />
       </main>
     </div>

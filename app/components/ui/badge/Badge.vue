@@ -1,14 +1,17 @@
 <script setup lang="ts">
 import type { HTMLAttributes } from 'vue'
 import { cn } from '~/lib/utils'
+import { type BadgeVariants, badgeVariants } from '.'
 
 const props = defineProps<{
+  variant?: BadgeVariants['variant']
+  size?: BadgeVariants['size']
   class?: HTMLAttributes['class']
 }>()
 </script>
 
 <template>
-  <ul data-sidebar="menu" :class="cn('flex w-full min-w-0 flex-col gap-0.5', props.class)">
+  <div :class="cn(badgeVariants({ variant, size }), props.class)">
     <slot />
-  </ul>
+  </div>
 </template>
