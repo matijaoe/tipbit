@@ -7,6 +7,7 @@ export default defineEventHandler(async (event) => {
     where: eq(users.id, user.id),
     with: {
       profiles: true,
+      authConnections: true,
     },
   })
 

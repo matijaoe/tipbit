@@ -11,6 +11,7 @@ export default defineOAuthGitHubEventHandler({
         identifierType: githubUser.email ? 'email' : 'username',
         displayName: githubUser.name || githubUser.login,
         avatarUrl: githubUser.avatar_url,
+        handle: githubUser.login,
       })
     } catch (error) {
       console.error('GitHub auth error:', error)

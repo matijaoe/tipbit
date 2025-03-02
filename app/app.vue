@@ -15,3 +15,9 @@ useSeoMeta({
     <ToastToaster />
   </Body>
 </template>
+
+<style>
+body.dark {
+  color-scheme: dark;
+}
+</style>

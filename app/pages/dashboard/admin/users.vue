@@ -7,13 +7,13 @@ const { data: users } = await useFetch('/api/users')
 </script>
 
 <template>
-  <div>
+  <div class="max-w-lg space-y-8">
     <Card>
       <CardHeader>
         <CardTitle>Users</CardTitle>
       </CardHeader>
       <CardContent>
-        <pre>{{ users }}</pre>
+        <pre class="no-scrollbar overflow-auto">{{ users }}</pre>
       </CardContent>
     </Card>
   </div>

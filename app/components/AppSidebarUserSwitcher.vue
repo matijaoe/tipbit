@@ -2,9 +2,7 @@
 import { BadgeCheck, Bell, ChevronsUpDown, LogOut } from 'lucide-vue-next'
 import { useSidebar } from '~/components/ui/sidebar/utils'
 
-const { user: sessionUser } = useUserSession()
 const { user } = useCurrentUser()
-const profile = computed(() => user.value?.profiles?.[0])
 const { logout } = useAuth()
 
 if (!user.value) {
@@ -14,9 +12,11 @@ if (!user.value) {
   })
 }
 
-const accountIdentifier = computed(() => sessionUser.value?.identifier ?? '')
-const avatarUrl = computed(() => user.value?.avatarUrl ?? '')
-const role = computed(() => sessionUser.value?.role ?? '')
+const { primaryProfile } = useCurrentUser()
+
+const handle = computed(() => `@${primaryProfile.value?.handle}`)
+const displayName = computed(() => primaryProfile.value?.displayName ?? '')
+const avatarUrl = computed(() => primaryProfile.value?.avatarUrl ?? user.value?.avatarUrl ?? '')
 
 const { isMobile } = useSidebar()
 
@@ -35,15 +35,15 @@ const handleLogout = async () => {
             class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
           >
             <Avatar size="sm" shape="square">
-              <AvatarImage :src="user?.avatarUrl ?? ''" :alt="profile?.handle ?? ''" />
+              <AvatarImage :src="avatarUrl" :alt="handle" />
               <AvatarFallback>
-                {{ profile?.displayName.charAt(0).toUpperCase() }}
+                {{ displayName.charAt(0).toUpperCase() }}
               </AvatarFallback>
             </Avatar>
             <div class="grid flex-1 text-left text-sm leading-tight">
-              <span class="truncate font-semibold">{{ profile?.displayName }}</span>
+              <span class="truncate font-semibold">{{ displayName }}</span>
               <span class="truncate text-xs text-muted-foreground">
-                {{ user?.identifier }}
+                {{ handle }}
               </span>
               <!-- <span class="truncate text-xs">
                 <Badge size="xs" :variant="role === 'ADMIN' ? 'default' : 'secondary'">{{ role }}</Badge>
@@ -61,15 +61,15 @@ const handleLogout = async () => {
           <DropdownMenuLabel class="p-0 font-normal">
             <div class="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
               <Avatar size="sm" shape="square">
-                <AvatarImage :src="user?.avatarUrl ?? ''" :alt="profile?.handle ?? ''" />
+                <AvatarImage :src="avatarUrl" :alt="handle" />
                 <AvatarFallback>
-                  {{ profile?.displayName.charAt(0).toUpperCase() }}
+                  {{ displayName.charAt(0).toUpperCase() }}
                 </AvatarFallback>
               </Avatar>
               <div class="grid flex-1 text-left text-sm leading-tight">
-                <span class="truncate font-semibold">{{ profile?.displayName }}</span>
+                <span class="truncate font-semibold">{{ displayName }}</span>
                 <span class="truncate text-xs text-muted-foreground">
-                  {{ user?.identifier }}
+                  {{ handle }}
                 </span>
                 <!-- <span class="truncate text-xs">
                   <Badge size="xs" :variant="role === 'ADMIN' ? 'default' : 'secondary'">{{ role }}</Badge>
@@ -79,13 +79,9 @@ const handleLogout = async () => {
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
-            <DropdownMenuItem>
+            <DropdownMenuItem @click="navigateTo('/dashboard/account')">
               <BadgeCheck class="size-4" />
               Account
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Bell class="size-4" />
-              Notifications
             </DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />

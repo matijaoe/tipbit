@@ -37,7 +37,10 @@ export const profiles = sqliteTable('profiles', {
     .references(() => users.id, { onDelete: 'cascade' }),
   handle: text('handle').notNull().unique(),
   displayName: text('display_name').notNull(),
+  avatarUrl: text('avatar_url'), // possible to override the default user avatar url
+  // bio: text('bio'),
   isPublic: integer('is_public', { mode: 'boolean' }).default(true),
+  isPrimary: integer('is_default', { mode: 'boolean' }).default(false),
   createdAt: integer('created_at', { mode: 'timestamp' })
     .notNull()
     .$defaultFn(() => new Date()),

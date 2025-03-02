@@ -12,6 +12,7 @@ export default defineOAuthTwitchEventHandler({
         identifierType: twitchUser.email ? 'email' : 'username',
         displayName: twitchUser.display_name || twitchUser.login,
         avatarUrl: twitchUser.profile_image_url,
+        handle: twitchUser.login,
       })
     } catch (error) {
       console.error('Twitch auth error:', error)

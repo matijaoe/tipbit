@@ -52,7 +52,7 @@ export type StrikeQuote = {
 
 export type StrikeSupportedCurrency = {
   currency: StrikeCurrency
-  isDefaultCurrency: boolean
+  isPrimaryCurrency: boolean
   isAvailable: boolean
   isInvoiceable: boolean
 }

@@ -12,6 +12,7 @@ export default defineOAuthXEventHandler({
         identifierType: 'username',
         displayName: xUser.name || xUser.username,
         avatarUrl: xUser.profile_image_url,
+        handle: xUser.username,
       })
     } catch (error) {
       console.error('X auth error:', error)
