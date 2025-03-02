@@ -111,3 +111,31 @@ export type XOAuthUser = {
   /** Whether the user is verified */
   verified: boolean
 }
+
+/**
+ * Twitch OAuth user response type
+ */
+export type TwitchOAuthUser = {
+  /** The user's unique Twitch ID */
+  id: string
+  /** The user's Twitch login name (username) */
+  login: string
+  /** The user's display name */
+  display_name: string
+  /** The user's account type */
+  type: string
+  /** The user's Twitch broadcaster type */
+  broadcaster_type: string
+  /** The user's profile description */
+  description: string
+  /** URL to the user's Twitch profile picture */
+  profile_image_url: string
+  /** URL to the user's offline image */
+  offline_image_url: string
+  /** Total number of views on the user's channel */
+  view_count: number
+  /** The user's email address (may not be available unless you have proper scopes) */
+  email?: string
+  /** Date when the user was created */
+  created_at: string
+}

@@ -20,7 +20,7 @@
     "db:check": "drizzle-kit check",
     "db:drop": "drizzle-kit drop",
     "db:export": "drizzle-kit export",
-    "db:reset": "rm -f server/database/data.db && pnpm run db:push && pnpm run db:seed"
+    "db:reset": "rm -f server/database/data.db && pnpm run db:push"
   },
   "dependencies": {
     "@libsql/client": "^0.14.0",

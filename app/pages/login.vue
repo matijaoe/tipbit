@@ -27,9 +27,10 @@ whenever(ready, () => {
       </CardHeader>
       <CardContent>
         <div class="flex flex-col gap-2">
-          <Button :loading="loadingProvider === 'github'" @click="handleLogin('github')"> Login with GitHub </Button>
-          <Button :loading="loadingProvider === 'google'" @click="handleLogin('google')"> Login with Google </Button>
-          <Button :loading="loadingProvider === 'x'" @click="handleLogin('x')"> Login with X </Button>
+          <Button :is-loading="loadingProvider === 'google'" @click="handleLogin('google')"> Login with Google </Button>
+          <Button :is-loading="loadingProvider === 'github'" @click="handleLogin('github')"> Login with GitHub </Button>
+          <Button :is-loading="loadingProvider === 'x'" @click="handleLogin('x')"> Login with X </Button>
+          <Button :is-loading="loadingProvider === 'twitch'" @click="handleLogin('twitch')"> Login with Twitch </Button>
         </div>
       </CardContent>
     </Card>

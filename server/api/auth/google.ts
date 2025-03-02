@@ -4,14 +4,12 @@ import { handleOAuthLogin } from '~~/server/utils/auth'
 export default defineOAuthGoogleEventHandler({
   async onSuccess(event, { user: googleUser }: { user: GoogleOAuthUser }) {
     try {
-      const baseUsername = googleUser.email.split('@')[0].toLowerCase()
-
       return await handleOAuthLogin(event, {
         id: googleUser.sub,
         provider: 'google',
-        email: googleUser.email,
-        username: baseUsername,
-        displayName: googleUser.name || baseUsername,
+        identifier: googleUser.email,
+        identifierType: 'email',
+        displayName: googleUser.name,
         avatarUrl: googleUser.picture,
       })
     } catch (error) {

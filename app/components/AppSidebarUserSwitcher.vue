@@ -13,8 +13,8 @@ if (!user.value) {
   })
 }
 
-const username = computed(() => sessionUser.value?.username ?? '')
-const avatarUrl = computed(() => sessionUser.value?.avatarUrl ?? '')
+const accountIdentifier = computed(() => sessionUser.value?.identifier ?? '')
+const avatarUrl = computed(() => user.value?.avatarUrl ?? '')
 const role = computed(() => sessionUser.value?.role ?? '')
 
 const { isMobile } = useSidebar()
@@ -34,13 +34,13 @@ const handleLogout = async () => {
             class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
           >
             <Avatar size="sm" shape="square">
-              <AvatarImage :src="avatarUrl" :alt="username" />
+              <AvatarImage :src="avatarUrl" :alt="accountIdentifier" />
               <AvatarFallback>
-                {{ username.charAt(0).toUpperCase() }}
+                {{ accountIdentifier.charAt(0).toUpperCase() }}
               </AvatarFallback>
             </Avatar>
             <div class="grid flex-1 text-left text-sm leading-tight">
-              <span class="truncate font-semibold">{{ username }}</span>
+              <span class="truncate font-semibold">{{ accountIdentifier }}</span>
               <span class="truncate text-xs">
                 <Badge size="xs" :variant="role === 'ADMIN' ? 'default' : 'secondary'">{{ role }}</Badge>
               </span>
@@ -57,13 +57,13 @@ const handleLogout = async () => {
           <DropdownMenuLabel class="p-0 font-normal">
             <div class="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
               <Avatar size="sm" shape="square">
-                <AvatarImage :src="avatarUrl" :alt="username" />
+                <AvatarImage :src="avatarUrl" :alt="accountIdentifier" />
                 <AvatarFallback>
-                  {{ username.charAt(0).toUpperCase() }}
+                  {{ accountIdentifier.charAt(0).toUpperCase() }}
                 </AvatarFallback>
               </Avatar>
               <div class="grid flex-1 text-left text-sm leading-tight">
-                <span class="truncate font-semibold">{{ username }}</span>
+                <span class="truncate font-semibold">{{ accountIdentifier }}</span>
                 <span class="truncate text-xs">
                   <Badge size="xs" :variant="role === 'ADMIN' ? 'default' : 'secondary'">{{ role }}</Badge>
                 </span>

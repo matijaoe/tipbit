@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { LayoutDashboard, FileText, Inbox, Globe, Users, ArrowUpRight } from 'lucide-vue-next'
+import { FileText, Globe, Inbox, LayoutDashboard, Users } from 'lucide-vue-next'
 import type { RouteLocationRaw } from 'vue-router'
 import AppSidebarUserSwitcher from './AppSidebarUserSwitcher.vue'
 
 const { user } = useUserSession()
-const username = computed(() => user?.value?.username ?? '')
+const { user: currentUser } = useCurrentUser()
+const profile = computed(() => currentUser.value?.profiles?.[0])
+
+const handle = computed(() => profile.value?.handle ?? '')
 
 type MenuItem = {
   title: string
@@ -24,14 +27,6 @@ const menuItems = computed<MenuItem[]>(() => [
     icon: Users,
   },
 ])
-
-const publicItems: MenuItem[] = [
-  {
-    title: 'Public Page',
-    url: `/${username.value}`,
-    icon: Globe,
-  },
-]
 
 const invoiceItems: MenuItem[] = [
   {
@@ -70,7 +65,7 @@ const adminItems: MenuItem[] = [
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton as-child>
-                <NuxtLink :to="`/${username}`">
+                <NuxtLink :to="`/${handle}`">
                   <Globe />
                   <div class="leading flex w-full items-center justify-between gap-2">
                     <span>Public page</span>

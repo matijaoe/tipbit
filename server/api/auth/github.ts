@@ -7,7 +7,8 @@ export default defineOAuthGitHubEventHandler({
       return await handleOAuthLogin(event, {
         id: githubUser.id.toString(),
         provider: 'github',
-        username: githubUser.login.toLowerCase(),
+        identifier: githubUser.email || `github:${githubUser.login}`,
+        identifierType: githubUser.email ? 'email' : 'username',
         displayName: githubUser.name || githubUser.login,
         avatarUrl: githubUser.avatar_url,
       })

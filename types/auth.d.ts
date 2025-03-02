@@ -4,7 +4,8 @@ import type { Role } from '~~/server/database/schema'
 declare module '#auth-utils' {
   interface User {
     id: string
-    username: string
+    identifier: string
+    identifierType: IdentifierType
     role: Role
     avatarUrl?: string
   }

@@ -7,7 +7,9 @@ export default defineOAuthXEventHandler({
       return await handleOAuthLogin(event, {
         id: xUser.id,
         provider: 'x',
-        username: xUser.username.toLowerCase(),
+        // TODO: email should also be possible
+        identifier: `x:${xUser.username}`,
+        identifierType: 'username',
         displayName: xUser.name || xUser.username,
         avatarUrl: xUser.profile_image_url,
       })

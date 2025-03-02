@@ -4,6 +4,9 @@ const { user } = useUserSession()
 definePageMeta({
   layout: 'dashboard',
 })
+
+const identifier = computed(() => user.value?.identifier)
+const isEmail = computed(() => user.value?.identifierType === 'email')
 </script>
 
 <template>
@@ -15,8 +18,9 @@ definePageMeta({
         <CardTitle>Welcome to your dashboard!</CardTitle>
       </CardHeader>
       <CardContent>
-        <p>This is your personal dashboard area.</p>
-        <p v-if="user">Logged in as: @{{ user.username }}</p>
+        <p v-if="user" class="text-muted-foreground">
+          {{ isEmail ? identifier : `@${identifier}` }}
+        </p>
       </CardContent>
     </Card>
   </div>

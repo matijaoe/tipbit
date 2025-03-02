@@ -1,8 +1,9 @@
 import { eq } from 'drizzle-orm'
-import { db } from '~~/server/database'
-import type { AuthProvider } from '~~/server/database/schema'
-import { authConnections, profiles, users } from '~~/server/database/schema'
 import type { H3Event } from 'h3'
+import { nanoid } from 'nanoid'
+import { db } from '~~/server/database'
+import type { AuthProvider, IdentifierType } from '~~/server/database/schema'
+import { authConnections, profiles, users } from '~~/server/database/schema'
 
 type OAuthProvider = AuthProvider
 
@@ -12,58 +13,29 @@ type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0]
 export interface OAuthProviderData {
   id: string
   provider: OAuthProvider
-  email?: string
-  username: string
+  identifier: string
+  identifierType: IdentifierType
   displayName: string
   avatarUrl?: string
 }
 
-// TODO: think of universal approach to handle usernames... or get rid of the on account level
-
-// Function to create a unique handle
-async function createUniqueHandle(tx: Transaction, baseHandle: string): Promise<string> {
-  let handle = baseHandle
-  let counter = 1
-
-  // Keep checking until we find a unique handle
-  while (true) {
-    // Check if the handle exists using the transaction
-    const existingProfile = await tx.query.profiles.findFirst({
-      where: eq(profiles.handle, handle),
-    })
-    console.log('🔍 existingProfile', existingProfile)
-
-    // If the handle doesn't exist, it's unique
-    if (!existingProfile) {
-      return handle
-    }
-
-    // Handle exists, add a number at the end and try again
-    handle = `${baseHandle}${counter}`
-    console.log('🔍 handle', handle)
-    counter++
-  }
+// Function to find user by email
+async function findUserByEmail(tx: Transaction, email: string) {
+  return await tx.query.users.findFirst({
+    where: (users) => eq(users.identifierType, 'email') && eq(users.identifier, email),
+  })
 }
 
-async function createUniqueUsername(tx: Transaction, baseUsername: string): Promise<string> {
-  let username = baseUsername
-  let counter = 1
-
-  while (true) {
-    const existingUser = await tx.query.users.findFirst({
-      where: eq(users.username, username),
-    })
-
-    if (!existingUser) {
-      return username
-    }
-
-    username = `${baseUsername}${counter}`
-    counter++
-  }
+// Function to find user by username
+async function findUserByUsername(tx: Transaction, username: string) {
+  return await tx.query.users.findFirst({
+    where: (users) => eq(users.identifierType, 'username') && eq(users.identifier, username),
+  })
 }
 
 export async function handleOAuthLogin(event: H3Event, providerData: OAuthProviderData) {
+  providerData.identifier = providerData.identifier.toLowerCase()
+
   return await db.transaction(async (tx) => {
     // Check if account is already connected
     const connection = await tx.query.authConnections.findFirst({
@@ -80,35 +52,61 @@ export async function handleOAuthLogin(event: H3Event, providerData: OAuthProvid
         await tx.update(users).set({ avatarUrl: providerData.avatarUrl }).where(eq(users.id, userId))
       }
     } else {
-      const uniqueUsername = await createUniqueUsername(tx, providerData.username)
+      // Check if user with this email already exists (for account linking)
+      let existingUser = null
+      if (providerData.identifierType === 'email') {
+        existingUser = await findUserByEmail(tx, providerData.identifier)
+      } else {
+        existingUser = await findUserByUsername(tx, providerData.identifier)
+      }
 
-      // New user - create account, profile and connection
-      const [newUser] = await tx
-        .insert(users)
-        .values({
-          username: uniqueUsername,
-          avatarUrl: providerData.avatarUrl,
+      if (existingUser) {
+        // Link this provider to existing account
+        userId = existingUser.id
+
+        // Create auth connection
+        await tx.insert(authConnections).values({
+          userId,
+          provider: providerData.provider,
+          providerUserId: providerData.id,
         })
-        .returning()
 
-      userId = newUser.id
+        // Update avatar if needed
+        if (providerData.avatarUrl) {
+          await tx.update(users).set({ avatarUrl: providerData.avatarUrl }).where(eq(users.id, userId))
+        }
+      } else {
+        // Determine identifier type and value
+        const identifierType: IdentifierType = providerData.identifierType
+        const baseIdentifier = providerData.identifier
 
-      // Create a unique handle
-      const uniqueHandle = await createUniqueHandle(tx, providerData.username)
+        // New user - create account, profile and connection
+        const [newUser] = await tx
+          .insert(users)
+          .values({
+            identifierType,
+            identifier: baseIdentifier,
+            avatarUrl: providerData.avatarUrl,
+          })
+          .returning()
 
-      // Create profile
-      await tx.insert(profiles).values({
-        userId,
-        displayName: providerData.displayName,
-        handle: uniqueHandle,
-      })
+        userId = newUser.id
 
-      // Create auth connection
-      await tx.insert(authConnections).values({
-        userId,
-        provider: providerData.provider,
-        providerUserId: providerData.id,
-      })
+        // Create profile
+        await tx.insert(profiles).values({
+          userId,
+          displayName: providerData.displayName,
+          // TODO: ask user for handle
+          handle: nanoid(8),
+        })
+
+        // Create auth connection
+        await tx.insert(authConnections).values({
+          userId,
+          provider: providerData.provider,
+          providerUserId: providerData.id,
+        })
+      }
     }
 
     // Get user data
@@ -124,7 +122,8 @@ export async function handleOAuthLogin(event: H3Event, providerData: OAuthProvid
     await setUserSession(event, {
       user: {
         id: user.id,
-        username: user.username,
+        identifier: user.identifier,
+        identifierType: user.identifierType,
         role: user.role,
         avatarUrl: user.avatarUrl ?? undefined,
       },

@@ -6,15 +6,19 @@ import { randomUUID } from 'crypto'
 const Roles = ['USER', 'ADMIN'] as const
 export type Role = (typeof Roles)[number]
 
-const AuthProviders = ['github', 'google', 'x'] as const
+const AuthProviders = ['github', 'google', 'x', 'twitch'] as const
 export type AuthProvider = (typeof AuthProviders)[number]
+
+const IdentifierTypes = ['email', 'username'] as const
+export type IdentifierType = (typeof IdentifierTypes)[number]
 
 // Core user entity
 export const users = sqliteTable('users', {
   id: text('id')
     .primaryKey()
     .$defaultFn(() => randomUUID()),
-  username: text('username').notNull().unique(),
+  identifierType: text('identifier_type', { enum: IdentifierTypes }).notNull(),
+  identifier: text('identifier').notNull().unique(),
   avatarUrl: text('avatar_url'),
   role: text('role', { enum: Roles }).default(Roles[0]).notNull(),
   createdAt: integer('created_at', { mode: 'timestamp' })
