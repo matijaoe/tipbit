@@ -96,7 +96,7 @@ export async function handleOAuthLogin(event: H3Event, providerData: OAuthProvid
         await tx.insert(profiles).values({
           userId,
           displayName: providerData.displayName,
-          // TODO: ask user for handle
+          // TODO: ask user for handle instead
           handle: nanoid(8),
         })
 

@@ -17,4 +17,8 @@ export default defineOAuthGitHubEventHandler({
       return sendRedirect(event, '/login?error=auth_failed')
     }
   },
+  onError(event, error) {
+    console.error('GitHub auth error:', error)
+    return sendRedirect(event, '/login?error=auth_failed')
+  },
 })

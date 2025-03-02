@@ -4,6 +4,7 @@ import { useSidebar } from '~/components/ui/sidebar/utils'
 
 const { user: sessionUser } = useUserSession()
 const { user } = useCurrentUser()
+const profile = computed(() => user.value?.profiles?.[0])
 const { logout } = useAuth()
 
 if (!user.value) {
@@ -34,16 +35,19 @@ const handleLogout = async () => {
             class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
           >
             <Avatar size="sm" shape="square">
-              <AvatarImage :src="avatarUrl" :alt="accountIdentifier" />
+              <AvatarImage :src="user?.avatarUrl ?? ''" :alt="profile?.handle ?? ''" />
               <AvatarFallback>
-                {{ accountIdentifier.charAt(0).toUpperCase() }}
+                {{ profile?.displayName.charAt(0).toUpperCase() }}
               </AvatarFallback>
             </Avatar>
             <div class="grid flex-1 text-left text-sm leading-tight">
-              <span class="truncate font-semibold">{{ accountIdentifier }}</span>
-              <span class="truncate text-xs">
-                <Badge size="xs" :variant="role === 'ADMIN' ? 'default' : 'secondary'">{{ role }}</Badge>
+              <span class="truncate font-semibold">{{ profile?.displayName }}</span>
+              <span class="truncate text-xs text-muted-foreground">
+                {{ user?.identifier }}
               </span>
+              <!-- <span class="truncate text-xs">
+                <Badge size="xs" :variant="role === 'ADMIN' ? 'default' : 'secondary'">{{ role }}</Badge>
+              </span> -->
             </div>
             <ChevronsUpDown class="ml-auto size-4" />
           </SidebarMenuButton>
@@ -57,16 +61,19 @@ const handleLogout = async () => {
           <DropdownMenuLabel class="p-0 font-normal">
             <div class="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
               <Avatar size="sm" shape="square">
-                <AvatarImage :src="avatarUrl" :alt="accountIdentifier" />
+                <AvatarImage :src="user?.avatarUrl ?? ''" :alt="profile?.handle ?? ''" />
                 <AvatarFallback>
-                  {{ accountIdentifier.charAt(0).toUpperCase() }}
+                  {{ profile?.displayName.charAt(0).toUpperCase() }}
                 </AvatarFallback>
               </Avatar>
               <div class="grid flex-1 text-left text-sm leading-tight">
-                <span class="truncate font-semibold">{{ accountIdentifier }}</span>
-                <span class="truncate text-xs">
-                  <Badge size="xs" :variant="role === 'ADMIN' ? 'default' : 'secondary'">{{ role }}</Badge>
+                <span class="truncate font-semibold">{{ profile?.displayName }}</span>
+                <span class="truncate text-xs text-muted-foreground">
+                  {{ user?.identifier }}
                 </span>
+                <!-- <span class="truncate text-xs">
+                  <Badge size="xs" :variant="role === 'ADMIN' ? 'default' : 'secondary'">{{ role }}</Badge>
+                </span> -->
               </div>
             </div>
           </DropdownMenuLabel>

@@ -18,4 +18,8 @@ export default defineOAuthTwitchEventHandler({
       return sendRedirect(event, '/login?error=auth_failed')
     }
   },
+  onError(event, error) {
+    console.error('Twitch OAuth error:', error)
+    return sendRedirect(event, '/')
+  },
 })

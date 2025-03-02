@@ -9,6 +9,7 @@ const emit = defineEmits<{
 }>()
 
 const accountHandle = useCookie<string>('tipbit_strike_account_handle')
+
 const { data: account } = useAsyncData<StrikeAccountProfile | undefined>('strike:account', async () => {
   if (!accountHandle.value) return undefined
   return fetchProfileByHandle(accountHandle.value)
@@ -74,7 +75,7 @@ defineExpose({ account })
       </CardHeader>
       <CardContent>
         <form class="flex gap-2" @submit.prevent="fetchAccount">
-          <Input v-model="accountHandle" placeholder="Strike handle" class="w-sm" />
+          <Input v-model.trim="accountHandle" placeholder="Strike handle" full-width />
           <Button variant="default">Fetch Account</Button>
         </form>
       </CardContent>

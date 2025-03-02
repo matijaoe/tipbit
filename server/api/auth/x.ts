@@ -18,4 +18,8 @@ export default defineOAuthXEventHandler({
       return sendRedirect(event, '/login?error=auth_failed')
     }
   },
+  onError(event, error) {
+    console.error('X OAuth error:', error)
+    return sendRedirect(event, '/')
+  },
 })

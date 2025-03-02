@@ -5,7 +5,7 @@ export type ISO8601DateTime = string & { readonly _brand: 'ISO8601' }
 export type PaymentCurrency = 'BTC' | 'USD' | 'EUR' | 'USDT' | 'GBP'
 export type InvoiceStatus = 'PENDING' | 'PAID' | 'EXPIRED' | 'CANCELLED'
 
-export type PaymentService = 'strike' | 'coinos' | 'alby'
+export type PaymentService = 'strike'
 
 export type InvoiceAmount = {
   amount: string
