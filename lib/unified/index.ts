@@ -20,6 +20,10 @@ export type InvoiceRequest = {
   description?: string
 }
 
+export type InvoiceRequestWithReceiver = InvoiceRequest & {
+  receiver: string
+}
+
 // response
 
 type StrikeServiceData = Pick<StrikeInvoice, 'correlationId'> &

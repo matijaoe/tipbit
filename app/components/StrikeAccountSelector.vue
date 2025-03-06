@@ -63,7 +63,7 @@ const strikeAccountTipUrl = computed(() => {
   return `https://strike.me/${account.value?.handle}`
 })
 
-defineExpose({ account })
+defineExpose({ account, clearAccount })
 </script>
 
 <template>

@@ -20,16 +20,33 @@ export default defineEventHandler(async (event) => {
   try {
     const profile = await useDB().query.profiles.findFirst({
       where: eq(profiles.handle, handle),
+      with: {
+        user: {
+          with: {
+            strikeConnection: true,
+          },
+        },
+      },
     })
 
-    if (!profile) {
+    // Transform the result
+    const transformedProfile = profile
+      ? {
+          ...profile,
+          strikeHandle: profile.user.strikeConnection?.handle,
+          // Remove user data
+          user: undefined,
+        }
+      : null
+
+    if (!transformedProfile) {
       throw createError({
         statusCode: 404,
         message: 'Profile not found',
       })
     }
 
-    return profile
+    return transformedProfile
   } catch (error) {
     console.error(`Error fetching profile with handle ${handle}:`, error)
     throw createError({
