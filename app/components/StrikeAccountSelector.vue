@@ -1,82 +1,42 @@
-<script lang="ts" setup>
-import { useToast } from '~/components/ui/toast'
-import { fetchProfileByHandle } from '~~/lib/strike/api/api'
-import type { StrikeAccountProfile } from '~~/lib/strike/api/types'
+<script setup lang="ts">
 import { ChevronRight, X as XIcon } from 'lucide-vue-next'
+import { useStrikeConnection } from '~/composables/connections/strike'
 
-const emit = defineEmits<{
-  'clear-account': []
-}>()
+const localHandle = useCookie('strike_handle')
 
-const accountHandle = useCookie<string>('tipbit_strike_account_handle')
+const {
+  account,
+  connection,
+  connectAccount,
+  disconnectAccount,
+  isConnectionLoading,
+  isAccountLoading,
+  strikeAccountAddress,
+  strikeAccountTipUrl,
+} = useStrikeConnection()
 
-const { data: account } = useAsyncData<StrikeAccountProfile | undefined>('strike:account', async () => {
-  if (!accountHandle.value) return undefined
-  return fetchProfileByHandle(accountHandle.value)
-})
-
-const { toast } = useToast()
+// Handle clear from composable and emit event
+const handleClearAccount = () => {
+  disconnectAccount()
+}
 
 const isDetailsOpen = ref(false)
-
-const fetchAccount = async () => {
-  if (!accountHandle.value) {
-    toast({
-      title: 'Please enter a Strike account handle',
-      variant: 'default',
-    })
-    return
-  }
-  try {
-    const fetchedAccount = await fetchProfileByHandle(accountHandle.value)
-    if (!fetchedAccount) {
-      toast({
-        title: 'Failed to fetch account',
-        variant: 'destructive',
-      })
-      return
-    }
-    account.value = fetchedAccount
-    toast({
-      title: 'Account connected',
-      variant: 'default',
-    })
-  } catch (err) {
-    console.error(err)
-    toast({
-      title: 'Account not found',
-      variant: 'destructive',
-    })
-  }
-}
-
-const clearAccount = () => {
-  accountHandle.value = ''
-  account.value = undefined
-  emit('clear-account')
-}
-
-const strikeAccountAddress = computed(() => {
-  return `${account.value?.handle}@strike.me`
-})
-const strikeAccountTipUrl = computed(() => {
-  return `https://strike.me/${account.value?.handle}`
-})
-
-defineExpose({ account, clearAccount })
 </script>
 
 <template>
   <section>
+    <div>
+      <pre>{{ connection }}</pre>
+    </div>
     <Card v-if="!account" class="w-full">
       <CardHeader>
         <CardTitle>Connect Strike Account</CardTitle>
         <CardDescription>Enter your Strike handle to get started</CardDescription>
       </CardHeader>
       <CardContent>
-        <form class="flex gap-2" @submit.prevent="fetchAccount">
-          <Input v-model.trim="accountHandle" placeholder="Strike handle" full-width />
-          <Button variant="default">Fetch Account</Button>
+        <form class="flex gap-2" @submit.prevent="connectAccount(localHandle)">
+          <Input v-model.trim="localHandle" placeholder="Strike handle" full-width />
+          <Button variant="default" :loading="isConnectionLoading || isAccountLoading">Fetch Account</Button>
         </form>
       </CardContent>
     </Card>
@@ -89,7 +49,7 @@ defineExpose({ account, clearAccount })
             <CardTitle>{{ strikeAccountAddress }}</CardTitle>
             <img :src="account.avatarUrl" alt="Avatar" class="size-8 rounded-full" />
           </div>
-          <Button variant="ghost" size="icon" @click.stop="clearAccount">
+          <Button variant="ghost" size="icon" @click.stop="handleClearAccount">
             <XIcon />
           </Button>
         </div>

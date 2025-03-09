@@ -8,7 +8,9 @@ export default defineNuxtConfig({
     'nuxt-auth-utils',
     '@nuxt/fonts',
     '@nuxtjs/color-mode',
+    '@pinia/nuxt',
   ],
+
   colorMode: {
     classSuffix: '',
     preference: 'system',
@@ -36,6 +38,9 @@ export default defineNuxtConfig({
       },
       '~/components',
     ],
+  },
+  pinia: {
+    storesDirs: ['~/stores/**'],
   },
   fonts: {
     families: [

@@ -10,11 +10,7 @@ export const useCurrentUser = () => {
     getCachedData: (key) => {
       const cachedUser = retrieveCached<UserWithProfiles>(key)
       const matchesSessionUser = cachedUser?.id === sessionUser.value?.id
-      if (matchesSessionUser) {
-        return cachedUser
-      }
-      // fetch new user data
-      return undefined
+      return matchesSessionUser ? cachedUser : undefined
     },
   })
 
