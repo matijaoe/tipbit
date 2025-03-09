@@ -5,7 +5,7 @@ export type StrikeInvoiceAmount = {
   currency: StrikeCurrency
 }
 
-export type StrikeCreateInvoiceRequest = {
+export type StrikeIssueInvoiceRequest = {
   correlationId: string
   description: string
   amount: StrikeInvoiceAmount
@@ -52,7 +52,7 @@ export type StrikeQuote = {
 
 export type StrikeSupportedCurrency = {
   currency: StrikeCurrency
-  isDefaultCurrency: boolean
+  isPrimaryCurrency: boolean
   isAvailable: boolean
   isInvoiceable: boolean
 }

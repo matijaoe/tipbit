@@ -1,24 +1,26 @@
 import type { H3Error } from 'h3'
 import { nanoid } from 'nanoid'
-import type { StrikeCreateInvoiceRequest } from '~~/lib/strike/api/types'
-import { createStrikeInvoice } from '~~/lib/strike/services/invoices'
-import type { Invoice, InvoiceRequest } from '~~/lib/unified'
+import type { StrikeIssueInvoiceRequest } from '~~/lib/strike/api/types'
+import { createStrikeInvoiceForReceiver } from '~~/lib/strike/services/invoices'
+import type { Invoice, InvoiceRequestWithReceiver } from '~~/lib/unified'
 
 export default defineEventHandler<{
-  body: InvoiceRequest
+  body: InvoiceRequestWithReceiver
   response: Invoice
 }>(async (event) => {
+  await requireUserSession(event)
+
   const body = await readBody(event)
 
   try {
     switch (body.service) {
       case 'strike': {
-        const strikeRequest: StrikeCreateInvoiceRequest = {
+        const strikeRequest: StrikeIssueInvoiceRequest = {
           ...body,
           correlationId: `tipbit-${nanoid()}`,
           description: body.description || '',
         }
-        const response = await createStrikeInvoice(strikeRequest)
+        const response = await createStrikeInvoiceForReceiver(body.receiver, strikeRequest)
         return response
       }
       default:

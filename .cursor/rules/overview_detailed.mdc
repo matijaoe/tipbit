@@ -1,0 +1,46 @@
+---
+description: More detailed project overview
+globs: 
+alwaysApply: false
+---
+# Tipbit Project Overview
+
+Tipbit is a Bitcoin tipping platform that simplifies micropayments using the Lightning Network. It offers a user-friendly interface and a unique multi-profile system, allowing users to receive tips while maintaining control over identities and payment preferences.
+
+## Core Vision
+
+Tipbit bridges the gap between Bitcoin's potential as a tipping currency and everyday user experience by abstracting the complexity of the Lightning Network. The multi-profile system enables users to create distinct tipping identities (e.g., `/@personal`, `/@business`, `/@project`) under one account, each with separate payment routing preferences.
+
+### Goals
+- **Simplify Tipping**: Reduce the process to a few clicks with instant settlement
+- **Empower Users**: Offer granular control over profiles and payment options
+- **Ensure Scalability**: Build a modular system that grows with Bitcoin's ecosystem
+- **Promote Privacy**: Keep data minimal and anonymous by default
+
+## User Experience Overview
+
+### Tipper Flow
+1. Visitor lands on a profile page (e.g., `tipbit.com/@johndoe`)
+2. They select a tip amount (preset options or custom value)
+3. A Lightning invoice is generated with QR code and payment link
+4. Real-time confirmation appears upon successful payment
+5. Tips remain anonymous by default unless the tipper opts to share their identity
+
+### Profile Owner Flow
+1. Account setup via OAuth providers
+2. Creation and management of multiple profiles
+3. Configuration of Lightning payment services with priority ordering
+4. Transaction monitoring with status updates
+
+## Key Differentiators
+
+- **Multi-Profile System**: Separate URLs, payment settings, and branding per profile
+- **Payment Method Prioritization**: Configure fallback paths for payment processing
+- **Privacy-First Design**: Minimal data storage and tipper anonymity by default
+- **Simple User Experience**: Abstract technical complexity for both tippers and recipients
+
+## Implementation Philosophy
+
+Tipbit is designed with simplicity, privacy, and extensibility as core principles. The application uses modern web technologies while keeping overhead minimal and focusing on user experience. Future enhancements will build upon this foundation to expand functionality without compromising these principles.
+
+This overview provides the conceptual framework for Tipbit. Detailed implementation specifications, technical architecture, and specific guidelines are documented in their respective files within the project.

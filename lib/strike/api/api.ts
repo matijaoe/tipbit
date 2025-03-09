@@ -1,8 +1,8 @@
 import type {
   StrikeAccountProfile,
-  StrikeCreateInvoiceRequest,
   StrikeCreateReceiveRequest,
   StrikeInvoice,
+  StrikeIssueInvoiceRequest,
   StrikeQuote,
   StrikeReceiveRequest,
 } from '~~/lib/strike/api/types'
@@ -19,7 +19,7 @@ const useStrikeApi = () => {
   })
 }
 
-export const createInvoice = async (body: StrikeCreateInvoiceRequest) => {
+export const issueInvoice = async (body: StrikeIssueInvoiceRequest) => {
   const strikeApiFetch = useStrikeApi()
   return await strikeApiFetch<StrikeInvoice>('/invoices', {
     method: 'POST',
@@ -27,11 +27,12 @@ export const createInvoice = async (body: StrikeCreateInvoiceRequest) => {
   })
 }
 
-export const createInvoiceForHandle = async (handle: string, body: StrikeCreateInvoiceRequest) => {
+export const issueInvoiceForReceiver = async (handle: string, body: StrikeIssueInvoiceRequest) => {
   const strikeApiFetch = useStrikeApi()
   return await strikeApiFetch<StrikeInvoice>(`/invoices/handle/${handle}`, {
     method: 'POST',
     body,
+    headers: undefined,
   })
 }
 

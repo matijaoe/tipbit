@@ -1,0 +1,24 @@
+---
+description: Guidelines for the overall architectural design of the project
+globs: *.md, *.ts, server/*
+alwaysApply: true
+---
+# Architectural Design
+
+## Frontend
+- Nuxt 3 (TypeScript, Vue Composition API)
+- Tailwind CSS v3, [shadcn-vue](mdc:https:/www.shadcn-vue.com) components
+- VueUse
+
+## Backend
+- Nuxt server routes, Nitro endpoints, TypeScript
+- SQLite database with Drizzle ORM (minimal data stored)
+
+## Authentication
+- OAuth (GitHub, Google, X, Twitch)
+- Future auth methods: Passkey, Nostr, optional 2FA
+
+## Deployment
+- Managed public instance (tipbit.com)
+- Docker Compose as primary self-hosted deployment method
+- Simple domain/subdomain setup for self-hosting (Vercel/Hetzner)

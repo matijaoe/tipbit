@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX `strike_connections_user_id_unique` ON `strike_connections` (`user_id`);

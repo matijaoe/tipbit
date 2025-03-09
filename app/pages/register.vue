@@ -1,7 +1,5 @@
 <script lang="ts" setup></script>
 
 <template>
-  <div>
-    <StrikeReceiveRequest />
-  </div>
+  <div>register</div>
 </template>

@@ -1,0 +1,12 @@
+---
+description: Future features
+globs: 
+alwaysApply: false
+---
+## Future Extensions
+
+- Modular integration for on-chain Bitcoin addresses and extended public keys (bitcoinjs-lib).
+- BOLT12 invoice support for internal node management.
+- Connection to own lightning node
+- Payment notifications via webhooks or internal notifications.
+- Optional analytics dashboard (minimal logging).

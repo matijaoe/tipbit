@@ -1,13 +1,13 @@
 <script lang="ts" setup>
 import { useQRCode } from '@vueuse/integrations/useQRCode'
 import { cancelInvoice, getInvoices } from '~~/lib/strike/api/api'
-import type { StrikeInvoice } from '~~/lib/strike/api/types'
-import type { Invoice, InvoiceRequest } from '~~/lib/unified'
+import type { StrikeAccountProfile, StrikeInvoice } from '~~/lib/strike/api/types'
+import type { Invoice, InvoiceRequestWithReceiver } from '~~/lib/unified'
 import { useToast } from './ui/toast'
-import StrikeAccountSelector from './StrikeAccountSelector.vue'
 
-const accountSelector = useTemplateRef('account-selector')
-const account = computed(() => accountSelector.value?.account)
+const props = defineProps<{
+  handle?: StrikeAccountProfile['handle']
+}>()
 
 const satsAmount = ref<number>()
 const formattedSatsAmount = computed(() => formatAmount(satsAmount.value ?? 0))
@@ -26,7 +26,13 @@ const clearInvoice = () => {
   clearAmount()
 }
 
-const [isInvoicePending, setIsInvoicePending] = useToggle(false)
+watchEffect(() => {
+  if (!props.handle) {
+    clearInvoice()
+  }
+})
+
+const [_isInvoicePending, setIsInvoicePending] = useToggle(false)
 
 const { toast } = useToast()
 
@@ -45,6 +51,15 @@ const tip = async () => {
     return
   }
 
+  if (!props.handle) {
+    toast({
+      title: 'Profile invoice handle not found',
+      variant: 'default',
+    })
+    setIsInvoicePending(false)
+    return
+  }
+
   try {
     const invoice = await $fetch<Invoice>('/api/invoices', {
       method: 'POST',
@@ -55,7 +70,8 @@ const tip = async () => {
           currency: 'BTC',
         },
         description: 'tipbit demo invoice',
-      } satisfies InvoiceRequest,
+        receiver: props.handle,
+      } satisfies InvoiceRequestWithReceiver,
     })
 
     console.log(invoice)
@@ -107,62 +123,51 @@ const _getAccountInvoices = async () => {
   console.log('fetchedInvoices', fetchedInvoices)
   invoices.value = fetchedInvoices
 }
-
-const clearAccount = () => {
-  invoices.value = []
-  clearInvoice()
-}
 </script>
 
 <template>
-  <div>
-    <StrikeAccountSelector ref="account-selector" @clear-account="clearAccount" />
+  <div v-if="handle" class="space-y-4">
+    <Card v-if="!lnInvoice">
+      <CardHeader>
+        <CardTitle>Create Invoice</CardTitle>
+        <CardDescription>Generate a Lightning Network invoice</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form class="flex gap-2" @submit.prevent="tip">
+          <Input
+            v-model.number="satsAmount"
+            full-width
+            :disabled="!!lnInvoice"
+            type="number"
+            placeholder="Tip amount (sats)"
+          />
+          <Button :disabled="!satsAmount" type="submit">Tip</Button>
+        </form>
+      </CardContent>
+    </Card>
 
-    <div v-if="account" class="mt-4 space-y-4">
-      <Card v-if="!lnInvoice">
-        <CardHeader>
-          <CardTitle>Create Invoice</CardTitle>
-          <CardDescription>Generate a Lightning Network invoice</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form class="flex gap-2" @submit.prevent="tip">
-            <Input
-              v-model.number="satsAmount"
-              full-width
-              :disabled="!!lnInvoice"
-              type="number"
-              placeholder="Tip amount (sats)"
-            />
-            <Button :disabled="!satsAmount" type="submit">Tip</Button>
-          </form>
-        </CardContent>
-      </Card>
+    <div v-else class="rounded-t-lg bg-card pt-4">
+      <div class="flex max-w-xs flex-col gap-4">
+        <p class="text-xl">
+          Tip <strong>{{ formattedSatsAmount }} sats</strong>
+        </p>
 
-      <Card v-else>
-        <CardContent class="pt-4">
-          <div class="flex max-w-xs flex-col gap-4">
-            <p class="text-xl">
-              Tip <strong>{{ formattedSatsAmount }} sats</strong>
-            </p>
+        <img
+          v-if="lnInvoiceQr"
+          id="invoice-qr"
+          :src="lnInvoiceQr"
+          alt="Invoice QR Code"
+          class="overflow-hidden rounded-xl"
+        />
 
-            <img
-              v-if="lnInvoiceQr"
-              id="invoice-qr"
-              :src="lnInvoiceQr"
-              alt="Invoice QR Code"
-              class="overflow-hidden rounded-xl"
-            />
-
-            <div class="mt-auto flex flex-wrap justify-end gap-3">
-              <Button variant="destructive" @click="cancelPendingInvoice">Cancel</Button>
-              <Button variant="secondary" @click="downloadQrCode">Download QR</Button>
-              <Button @click="() => copyInvoice(lnInvoice)">
-                {{ copied ? 'Copied!!! 😎' : 'Copy to clipboard' }}
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+        <div class="mt-auto flex flex-wrap justify-end gap-3">
+          <Button size="sm" variant="destructive" @click="cancelPendingInvoice">Cancel</Button>
+          <Button size="sm" variant="secondary" @click="downloadQrCode">Download QR</Button>
+          <Button size="sm" @click="() => copyInvoice(lnInvoice)">
+            {{ copied ? 'Copied!!! 😎' : 'Copy to clipboard' }}
+          </Button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
