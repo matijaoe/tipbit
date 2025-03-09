@@ -6,19 +6,19 @@ definePageMeta({
 })
 
 const accountSelector = useTemplateRef<InstanceType<typeof StrikeAccountSelector>>('account-selector')
-const account = computed(() => accountSelector.value?.account)
+const handle = computed(() => accountSelector.value?.connection?.profile?.handle)
 
 const clearAccount = () => {
-  accountSelector.value?.clearAccount()
+  accountSelector.value?.clearConnection()
 }
 </script>
 
 <template>
-  <div class="max-w-lg">
+  <div>
     <h2 class="mb-4 text-xl font-semibold">Invoice</h2>
 
     <StrikeAccountSelector ref="account-selector" @clear-account="clearAccount" />
 
-    <StrikeInvoice v-if="account" class="mt-4" :handle="account.handle" />
+    <StrikeInvoice v-if="handle" class="mt-4" :handle="handle" />
   </div>
 </template>

@@ -1,51 +1,32 @@
-import { fetchProfileByHandle } from '~~/lib/strike/api/api'
+import type { ResultSet } from '@libsql/client'
 import type { StrikeAccountProfile } from '~~/lib/strike/api/types'
 import type { StrikeConnection } from '~~/server/utils/db'
 
+type StrikeConnectionWithProfile = StrikeConnection & {
+  profile?: StrikeAccountProfile
+}
+
 export const useStrikeConnection = () => {
-  const { user: sessionUser, loggedIn } = useUserSession()
+  const { loggedIn } = useUserSession()
 
   const {
     data: connection,
     status: connectionStatus,
     refresh: refetchUserConnection,
     clear: clearUserConnection,
-  } = useFetch<StrikeConnection>('/api/connections/strike/me', {
+  } = useFetch<StrikeConnectionWithProfile>('/api/connections/strike/me', {
     key: 'user:connection:strike',
-    immediate: loggedIn.value,
-    getCachedData: (key) => {
-      const cachedConnection = retrieveCached<StrikeConnection>(key)
-      const matchesSessionUser = cachedConnection?.id === sessionUser.value?.id
-      return matchesSessionUser ? cachedConnection : undefined
+    query: {
+      profile: true,
     },
+    immediate: loggedIn.value,
   })
 
   const isConnected = computed(() => !!connection.value)
   const isConnectionLoading = computed(() => connectionStatus.value === 'pending')
-
   const connectionId = computed(() => connection.value?.id)
-  const connectionHandle = computed(() => connection.value?.handle)
 
-  // Strike profile
-  const {
-    data: profile,
-    status: accountStatus,
-    refresh: refetchProfile,
-  } = useAsyncData<StrikeAccountProfile | undefined>(
-    'user:connection_profile:strike',
-    async () => {
-      if (!connectionHandle.value) return undefined
-      return fetchProfileByHandle(connectionHandle.value)
-    },
-    {
-      server: true,
-      lazy: false,
-      immediate: isConnected.value,
-      watch: [connectionHandle],
-    }
-  )
-
-  const isProfileLoading = computed(() => accountStatus.value === 'pending')
+  const profile = computed(() => connection.value?.profile)
   const profileHandle = computed(() => profile.value?.handle)
 
   const connectAccount = async (handle: string) => {
@@ -61,9 +42,8 @@ export const useStrikeConnection = () => {
         },
       })
       await refetchUserConnection()
-      await refetchProfile()
     } catch (err) {
-      console.error('[connectAccount]', err)
+      console.error('Error connecting Strike account', err)
       throw err
     }
   }
@@ -73,12 +53,12 @@ export const useStrikeConnection = () => {
       return
     }
 
-    const deleted = await $fetch(`/api/connections/strike/${connectionId.value}`, {
+    const res = await $fetch<ResultSet>(`/api/connections/strike/${connectionId.value}`, {
       method: 'DELETE',
     })
 
-    if (!deleted) {
-      throw new Error('Failed to disconnect account')
+    if (!res.rowsAffected) {
+      throw new Error('Failed to disconnect Strike account')
     }
 
     clearUserConnection()
@@ -90,7 +70,6 @@ export const useStrikeConnection = () => {
     // Current connection
     connection,
     isConnected,
-    connectionHandle,
     isConnectionLoading,
     refetchUserConnection,
     connectAccount,
@@ -98,7 +77,6 @@ export const useStrikeConnection = () => {
 
     // Strike profile
     profile,
-    isProfileLoading,
     profileHandle,
   }
 }

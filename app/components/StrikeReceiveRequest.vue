@@ -7,7 +7,7 @@ import { AnimatePresence, Motion } from 'motion-v'
 import StrikeAccountSelector from './StrikeAccountSelector.vue'
 
 const accountSelector = useTemplateRef('account-selector')
-const account = toRef(() => accountSelector.value?.account)
+const handle = toRef(() => accountSelector.value?.connection?.profile?.handle)
 
 // State for the amount
 const satsAmount = ref<number>()
@@ -106,6 +106,7 @@ const downloadQrCode = () => {
 }
 
 const clearAccount = () => {
+  accountSelector.value?.clearConnection()
   clearReceiveRequest()
 }
 </script>
@@ -114,7 +115,7 @@ const clearAccount = () => {
   <div>
     <StrikeAccountSelector ref="account-selector" @clear-account="clearAccount" />
 
-    <div v-if="account" class="mt-4 space-y-4">
+    <div v-if="handle" class="mt-4 space-y-4">
       <Card v-if="!lnInvoice && !onchainAddress">
         <CardHeader>
           <CardTitle>Create Payment Request</CardTitle>

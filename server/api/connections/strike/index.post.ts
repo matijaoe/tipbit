@@ -24,6 +24,7 @@ export default defineEventHandler(async (event) => {
 
   try {
     // Verify handle exists on Strike
+    // TODO: verify on the frontend first
     const accountProfile = await fetchProfileByHandle(handle)
 
     if (!accountProfile) {
@@ -52,8 +53,7 @@ export default defineEventHandler(async (event) => {
       const [updatedConnection] = await db
         .update(strikeConnections)
         .set({
-          handle: accountProfile.handle,
-          receiverId: accountProfile.id,
+          strikeProfileId: accountProfile.id,
           updatedAt: new Date(),
         })
         .where(eq(strikeConnections.userId, user.id))
@@ -66,8 +66,7 @@ export default defineEventHandler(async (event) => {
         .insert(strikeConnections)
         .values({
           userId: user.id,
-          handle: accountProfile.handle,
-          receiverId: accountProfile.id,
+          strikeProfileId: accountProfile.id,
         })
         .returning()
 

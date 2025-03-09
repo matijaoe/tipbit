@@ -10,7 +10,7 @@ const isEmail = computed(() => user.value?.identifierType === 'email')
 </script>
 
 <template>
-  <div class="max-w-lg">
+  <div>
     <h2 class="mb-4 text-xl font-semibold">Dashboard Overview</h2>
 
     <Card>

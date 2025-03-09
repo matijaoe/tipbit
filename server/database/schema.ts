@@ -74,8 +74,7 @@ export const strikeConnections = sqliteTable('strike_connections', {
     .notNull()
     .unique()
     .references(() => users.id, { onDelete: 'cascade' }),
-  handle: text('handle').notNull(),
-  receiverId: text('receiver_id').notNull(),
+  strikeProfileId: text('strike_profile_id').notNull(),
   createdAt: integer('created_at', { mode: 'timestamp' })
     .notNull()
     .$defaultFn(() => new Date()),

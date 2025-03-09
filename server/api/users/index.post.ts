@@ -1,3 +1,4 @@
+// TODO
 export default defineEventHandler(async (event) => {
   await requireUserSession(event)
   const body = await readBody(event)
@@ -6,8 +7,8 @@ export default defineEventHandler(async (event) => {
 
   const profile = await useDB().insert(tables.profiles).values({
     userId: user.id,
-    displayName: user.username,
-    handle: user.username.toLowerCase(),
+    displayName: user.identifier,
+    handle: user.identifier.toLowerCase(),
   })
 
   return {

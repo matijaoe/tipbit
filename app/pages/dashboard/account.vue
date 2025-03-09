@@ -6,7 +6,7 @@ definePageMeta({
   layout: 'dashboard',
 })
 
-const { user, primaryProfile } = useCurrentUser()
+const { user } = useCurrentUser()
 
 const authConnections = computed(() => user.value?.authConnections)
 const profiles = computed(() => user.value?.profiles ?? [])
@@ -23,7 +23,7 @@ function getProviderName(provider: AuthProvider) {
 </script>
 
 <template>
-  <div class="max-w-lg space-y-8">
+  <div class="space-y-8">
     <!-- Account Information Card -->
     <Card>
       <CardHeader>

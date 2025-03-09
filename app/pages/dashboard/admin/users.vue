@@ -9,7 +9,7 @@ const { data: users } = await useFetch('/api/users', {
 </script>
 
 <template>
-  <div class="max-w-lg space-y-8">
+  <div class="space-y-8">
     <Card>
       <CardHeader>
         <CardTitle>Users</CardTitle>

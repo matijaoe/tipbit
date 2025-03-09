@@ -5,19 +5,31 @@ import { useStrikeConnection } from '~/composables/connections/strike'
 const {
   // Current connection
   connection,
+  isConnected,
   isConnectionLoading,
   connectAccount,
   disconnectAccount,
 
   // Strike profile
   profile,
-  isProfileLoading,
   profileHandle,
 } = useStrikeConnection()
 
 const localHandle = ref(profileHandle.value ?? '')
-const strikeProfileAddress = computed(() => (profile.value ? `${profile.value.handle}@strike.me` : ''))
-const strikeProfileTipUrl = computed(() => (profile.value ? `https://strike.me/${profile.value.handle}` : ''))
+const strikeProfileAddress = computed(() => {
+  if (!isDefined(profileHandle)) {
+    return ''
+  }
+  return `${profileHandle.value}@strike.me`
+})
+const strikeProfileTipUrl = computed(() => {
+  if (!isDefined(profileHandle)) {
+    return ''
+  }
+  const url = new URL('https://strike.me')
+  url.pathname = profileHandle.value
+  return url.href
+})
 
 const isDetailsOpen = ref(false)
 
@@ -26,18 +38,16 @@ const clearConnection = () => {
   isDetailsOpen.value = false
   disconnectAccount()
 }
+
+defineExpose({
+  connection,
+  clearConnection,
+})
 </script>
 
 <template>
   <section>
-    <div>
-      <p>connection</p>
-      <pre>{{ connection }}</pre>
-    </div>
-    <div>
-      <strong>local: @{{ localHandle }}</strong>
-    </div>
-    <Card v-if="!profile" class="w-full">
+    <Card v-if="!isConnected && !profile" class="w-full">
       <CardHeader>
         <CardTitle>Connect Strike Account</CardTitle>
         <CardDescription>Enter your Strike handle to get started</CardDescription>
@@ -45,12 +55,12 @@ const clearConnection = () => {
       <CardContent>
         <form class="flex gap-2" @submit.prevent="connectAccount(localHandle)">
           <Input v-model.trim="localHandle" placeholder="Strike handle" full-width />
-          <Button variant="default" :loading="isConnectionLoading || isProfileLoading">Fetch Account</Button>
+          <Button v-if="!isConnected" variant="default" :loading="isConnectionLoading">Fetch Account</Button>
         </form>
       </CardContent>
     </Card>
 
-    <Card v-else class="w-full">
+    <Card v-else-if="profile" class="w-full">
       <CardHeader class="cursor-pointer" @click="isDetailsOpen = !isDetailsOpen">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
@@ -88,6 +98,16 @@ const clearConnection = () => {
             {{ strikeProfileTipUrl.replace('https://', '') }}
           </NuxtLink>
         </div>
+      </CardContent>
+    </Card>
+
+    <Card v-else-if="!isConnectionLoading" class="w-full">
+      <CardHeader>
+        <CardTitle>No Strike account profile found</CardTitle>
+        <CardDescription>Please try connecting your Strike account again</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Button variant="default" @click="disconnectAccount">Connect Strike Account</Button>
       </CardContent>
     </Card>
   </section>

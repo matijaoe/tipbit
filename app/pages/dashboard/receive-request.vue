@@ -5,7 +5,7 @@ definePageMeta({
 </script>
 
 <template>
-  <div class="max-w-lg">
+  <div>
     <h2 class="mb-4 text-xl font-semibold">Receive Request</h2>
     <StrikeReceiveRequest />
   </div>

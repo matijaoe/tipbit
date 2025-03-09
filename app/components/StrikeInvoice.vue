@@ -1,13 +1,12 @@
 <script lang="ts" setup>
 import { useQRCode } from '@vueuse/integrations/useQRCode'
 import { cancelInvoice, getInvoices } from '~~/lib/strike/api/api'
-import type { StrikeInvoice } from '~~/lib/strike/api/types'
+import type { StrikeAccountProfile, StrikeInvoice } from '~~/lib/strike/api/types'
 import type { Invoice, InvoiceRequestWithReceiver } from '~~/lib/unified'
 import { useToast } from './ui/toast'
-import type { StrikeConnection } from '~~/server/utils/db'
 
 const props = defineProps<{
-  handle?: StrikeConnection['handle']
+  handle?: StrikeAccountProfile['handle']
 }>()
 
 const satsAmount = ref<number>()

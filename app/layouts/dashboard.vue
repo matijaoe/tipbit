@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Moon, Sun } from 'lucide-vue-next';
+import { Moon, Sun } from 'lucide-vue-next'
 </script>
 
 <template>
@@ -25,7 +25,7 @@ import { Moon, Sun } from 'lucide-vue-next';
         </ClientOnly>
       </header>
 
-      <main class="flex-1 p-6 py-2">
+      <main class="max-w-lg flex-1 p-6 py-2">
         <slot />
       </main>
     </div>
