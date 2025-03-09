@@ -7,17 +7,9 @@ export default defineEventHandler(async (event) => {
   const { connectionId } = getRouterParams(event)
 
   const db = useDB()
-
   const deleted = await db
     .delete(strikeConnections)
     .where(and(eq(strikeConnections.id, connectionId), eq(strikeConnections.userId, user.id)))
-
-  if (!deleted) {
-    throw createError({
-      statusCode: 404,
-      message: 'Connection not found or unauthorized',
-    })
-  }
 
   return deleted
 })

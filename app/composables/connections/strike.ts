@@ -3,31 +3,16 @@ import type { StrikeAccountProfile } from '~~/lib/strike/api/types'
 import type { StrikeConnection } from '~~/server/utils/db'
 
 export const useStrikeConnection = () => {
-  const { user: sessionUser } = useUserSession()
-
-  // Try to figure out how to implement this
-  // persist connection and fetched connection profile
-  const localHandle = useCookie('strike_handle')
-  const setLocalHandle = (handle: string) => {
-    localHandle.value = handle
-  }
-
-  // Connection
-  const connectionBody = computed(() => ({
-    handle: localHandle.value,
-  }))
+  const { user: sessionUser, loggedIn } = useUserSession()
 
   const {
     data: connection,
-    refresh: refreshConnection,
-    execute: _connectAccount,
-    status: connectStatus,
-  } = useFetch<StrikeConnection>('/api/connect/strike', {
+    status: connectionStatus,
+    refresh: refetchUserConnection,
+    clear: clearUserConnection,
+  } = useFetch<StrikeConnection>('/api/connections/strike/me', {
     key: 'user:connection:strike',
-    method: 'POST',
-    immediate: false,
-    watch: false,
-    body: connectionBody,
+    immediate: loggedIn.value,
     getCachedData: (key) => {
       const cachedConnection = retrieveCached<StrikeConnection>(key)
       const matchesSessionUser = cachedConnection?.id === sessionUser.value?.id
@@ -35,72 +20,85 @@ export const useStrikeConnection = () => {
     },
   })
 
-  const isConnectionLoading = computed(() => connectStatus.value === 'pending')
   const isConnected = computed(() => !!connection.value)
+  const isConnectionLoading = computed(() => connectionStatus.value === 'pending')
+
+  const connectionId = computed(() => connection.value?.id)
   const connectionHandle = computed(() => connection.value?.handle)
 
-  // Account
-  const { data: account, status: accountStatus } = useAsyncData<StrikeAccountProfile | undefined>(
+  // Strike profile
+  const {
+    data: profile,
+    status: accountStatus,
+    refresh: refetchProfile,
+  } = useAsyncData<StrikeAccountProfile | undefined>(
     'user:connection_profile:strike',
     async () => {
       if (!connectionHandle.value) return undefined
       return fetchProfileByHandle(connectionHandle.value)
     },
     {
-      immediate: !!connection.value,
+      server: true,
+      lazy: false,
+      immediate: isConnected.value,
       watch: [connectionHandle],
     }
   )
 
-  const isAccountLoading = computed(() => accountStatus.value === 'pending')
+  const isProfileLoading = computed(() => accountStatus.value === 'pending')
+  const profileHandle = computed(() => profile.value?.handle)
 
-  const strikeAccountAddress = computed(() => (account.value ? `${account.value.handle}@strike.me` : ''))
-  const strikeAccountTipUrl = computed(() => (account.value ? `https://strike.me/${account.value.handle}` : ''))
-
-  // Connect account using the API
   const connectAccount = async (handle: string) => {
     if (!handle) {
       throw new Error('Strike handle is required')
     }
 
     try {
-      setLocalHandle(handle)
-      await _connectAccount()
+      await $fetch('/api/connections/strike', {
+        method: 'POST',
+        body: {
+          handle,
+        },
+      })
+      await refetchUserConnection()
+      await refetchProfile()
     } catch (err) {
       console.error('[connectAccount]', err)
-      setLocalHandle('')
       throw err
     }
   }
 
   const disconnectAccount = async () => {
-    await $fetch(`/api/connect/${connection.value?.id}`, {
+    if (!isConnected.value) {
+      return
+    }
+
+    const deleted = await $fetch(`/api/connections/strike/${connectionId.value}`, {
       method: 'DELETE',
     })
 
-    // Refresh connection data
-    await refreshConnection()
-    setLocalHandle('')
+    if (!deleted) {
+      throw new Error('Failed to disconnect account')
+    }
+
+    clearUserConnection()
 
     return true
   }
 
   return {
-    // Data
+    // Current connection
     connection,
-    account,
-
-    // Computed
     isConnected,
     connectionHandle,
     isConnectionLoading,
-    isAccountLoading,
-    strikeAccountAddress,
-    strikeAccountTipUrl,
-
-    // Methods
+    refetchUserConnection,
     connectAccount,
     disconnectAccount,
-    refresh: refreshConnection,
+
+    // Strike profile
+    profile,
+    isProfileLoading,
+    profileHandle,
   }
 }

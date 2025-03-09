@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { BadgeCheck, Bell, ChevronsUpDown, LogOut } from 'lucide-vue-next'
+import { BadgeCheck, ChevronsUpDown, LogOut } from 'lucide-vue-next'
 import { useSidebar } from '~/components/ui/sidebar/utils'
 
 const { user } = useCurrentUser()

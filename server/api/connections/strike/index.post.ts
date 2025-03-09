@@ -5,7 +5,7 @@ import { strikeConnections } from '~~/server/database/schema'
 
 /**
  * API endpoint to connect a Strike account to a user
- * POST /api/connect/strike
+ * POST /api/connections/strike
  * Requires authentication
  */
 export default defineEventHandler(async (event) => {
