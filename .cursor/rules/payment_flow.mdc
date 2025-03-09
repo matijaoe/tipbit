@@ -1,0 +1,31 @@
+---
+description: Details the tipping process, invoice generation, and payment confirmation
+globs: 
+alwaysApply: false
+---
+# Payment Flow
+
+## Invoice Generation
+- Lightning invoices generated through APIs (Strike, Coinos, Alby)
+- Real-time invoice payment status via external WebSocket APIs
+- QR codes displayed via `@vueuse/integrations/useQRCode`
+
+### Payment Connections
+- Lightning via Strike, Coinos, Alby APIs.
+  - https://docs.strike.me/api/
+  - https://coinos.io/docs
+  - https://guides.getalby.com/developer-guide/alby-wallet-api
+- Future on-chain addresses: static or dynamic (HD wallets).
+- Drag-and-drop sorting for payment priority using shadcn-vue components.
+
+## Payment Handling
+- Anonymous tipping default; explicit opt-in for tipper profile sharing
+- No refunds or disputes
+
+## Currency
+- Supports sats, USD, and EUR (initial conversions via Strike; external API planned later)
+
+## Invoice Data (Minimal Storage)
+- Stored fields: `invoice_id`, `amount`, `currency`, `status` (pending, paid, expired), timestamps
+- Cleanup unpaid invoices periodically (CRON jobs)
+

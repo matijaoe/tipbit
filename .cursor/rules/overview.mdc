@@ -1,0 +1,34 @@
+---
+description: High-level overview of the project’s purpose, vision, and goalsois
+globs: *.md
+alwaysApply: true
+---
+# Project Overview
+
+Tipbit is a simple, privacy-focused Bitcoin tipping platform leveraging the Lightning Network. Users can effortlessly send and receive tips using multiple profiles under a single account, each with a unique handle and payment setup.
+
+## Vision & Goals
+- **Frictionless Bitcoin tipping** via Lightning Network (using Strike, Coinos, Alby APIs).
+- **Multiple user profiles** per account, each with customizable payment methods.
+- Privacy-first: anonymous tipping by default, optional profile-sharing.
+- Modular architecture for easy integration of future features (on-chain Bitcoin, user-managed nodes, BOLT12 invoicing).
+
+## Key User Flows
+- **Tipping Flow:** User visits a profile (`/@handle`), selects tip amount (sats/USD/EUR), and pays via Lightning invoice (generated through external APIs like Strike, Coinos, or Alby). Immediate real-time confirmation provided.
+- **Profile Management:** Authenticated users (OAuth via GitHub, Google, X, Twitch) create multiple profiles, connect Lightning payment services (Strike, Coinos, Alby), and manage payment method priority through drag-and-drop UI.
+
+## Technical Stack & Deployment
+- **Frontend:** Nuxt 3 (TypeScript, Vue Composition API), Tailwind CSS, shadcn-vue components.
+- **Backend:** Nuxt server routes, Nitro API endpoints.
+- **Database:** SQLite with Drizzle ORM (minimal data storage).
+- **Authentication:** OAuth initially, future support for Passkeys/Nostr.
+- **Deployment:** Docker Compose setup for easy self-hosting or managed services (Vercel/Hetzner).
+
+## Security & Privacy Essentials
+- **Encrypted API keys** (`libsodium`).
+- **Rate limiting** on invoice generation endpoints (10/min per IP).
+
+## Future Enhancements (Planned)
+- **On-chain Bitcoin payments** (single & HD wallet addresses via `bitcoinjs-lib`).
+- **BOLT12 invoice** and **Lightning address creation**.
+- Optional minimal analytics and notifications.

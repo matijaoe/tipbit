@@ -1,0 +1,18 @@
+---
+description: UX/UI consistency, responsiveness, and accessibility guidelines
+globs: src/**/*.vue, tailwind.config.js
+alwaysApply: false
+---
+## UI/UX Guidelines
+
+### Accessibility
+- WCAG-compliant design, ARIA attributes.
+- Keyboard navigation and screen reader compatibility.
+
+### Responsiveness
+- Consistent responsiveness across devices (Tailwind CSS utility classes).
+- Standardize UI components using shadcn-vue presets.
+- Minimal customization initially.
+
+### User Feedback
+- Provide clear loading indicators and confirmation/error messages.

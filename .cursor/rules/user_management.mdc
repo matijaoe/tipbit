@@ -1,0 +1,14 @@
+---
+description: Guidelines for user authentication, profile management, and payment connections
+globs: 
+alwaysApply: false
+---
+## User Management
+
+### Authentication
+- OAuth via GitHub, Google, X, Twitch ([Nuxt auth utils](mdc:https:/nuxt.com/modules/auth-utils)).
+- Future support: Passkey, Nostr login, 2FA (TOTP/security keys).
+
+### Multi-Profile Support
+- Users can manage multiple profiles per account, each with a unique public handle.
+- Profiles have independent payment connections.

@@ -1,0 +1,17 @@
+---
+description: Testing strategies
+globs: *.test.ts
+alwaysApply: false
+---
+## Testing Strategy
+
+### Unit Tests
+- Vitest, Vue Test Utils.
+- Coverage: authentication, payment logic, key UI components.
+
+### Integration & E2E Tests
+- Deferred until after initial functionality stabilizes.
+
+### CI/CD
+- Minimal setup using GitHub Actions.
+- Ensure unit tests pass before merging.

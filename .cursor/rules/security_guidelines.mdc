@@ -1,0 +1,23 @@
+---
+description: Security guidelines for API key management and endpoint protection
+globs: server/**/*.ts
+alwaysApply: false
+---
+## Security Guidelines
+
+### Encryption
+- Encrypt all API keys in DB using `libsodium`.
+- Store runtime encryption keys securely via Nuxt runtime config.
+
+### Rate Limiting
+- Invoice generation: Max 10 requests/min per IP.
+
+### Input Validation
+- Sanitize and validate all user input.
+
+### Privacy Defaults
+- Anonymous tipping by default.
+- Explicit opt-in required to share tipper profile.
+
+### CSRF Protection
+- Protect state-changing endpoints with Nuxt middleware and CSRF tokens.
