@@ -1,4 +1,4 @@
-import { fetchProfileById } from '~~/lib/strike/api/api'
+import { fetchProfileById, fetchProfileWithConnection } from '~~/lib/strike/api/api'
 import { strikeConnections } from '~~/server/database/schema'
 import { z } from 'zod'
 
@@ -17,12 +17,35 @@ export default defineEventHandler(async (event) => {
     where: eq(strikeConnections.userId, user.id),
   })
 
+  if (!connection) {
+    return null
+  }
+
+  // Don't expose the encrypted API key to the client
+  const sanitizedConnection = {
+    ...connection,
+    // Replace actual API key with a boolean indicating if one exists
+    apiKey: connection.apiKey ? true : undefined,
+  }
+
   try {
     if (withProfile && connection) {
-      const profile = await fetchProfileById(connection.strikeProfileId)
+      let profile
+
+      if (connection.apiKey) {
+        // Fetch profile using the user's API key
+        profile = await fetchProfileWithConnection(
+          connection.strikeProfileId,
+          false, // Not a handle
+          { type: 'api_key', apiKey: connection.apiKey }
+        )
+      } else {
+        // Fetch profile using the global API key
+        profile = await fetchProfileById(connection.strikeProfileId)
+      }
 
       const connectionWithProfile = {
-        ...connection,
+        ...sanitizedConnection,
         profile,
       }
 
@@ -32,5 +55,5 @@ export default defineEventHandler(async (event) => {
     console.error('Error fetching Strike profile', err)
   }
 
-  return connection
+  return sanitizedConnection
 })

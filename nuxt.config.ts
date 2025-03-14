@@ -56,10 +56,16 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     public: {
-      // TODO: move out of public when moved to own server api
+      encryption: {
+        publicKey: process.env.NUXT_ENCRYPTION_PUBLIC_KEY,
+      },
       strikeApiKey: process.env.STRIKE_API_KEY,
       strikeApiUrl: process.env.STRIKE_API_URL,
     },
     dbFileName: process.env.DB_FILE_NAME,
+    encryption: {
+      privateKey: process.env.NUXT_ENCRYPTION_PRIVATE_KEY,
+    },
+    storageEncryptionKey: process.env.NUXT_STORAGE_ENCRYPTION_KEY,
   },
 })

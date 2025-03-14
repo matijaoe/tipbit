@@ -5,12 +5,14 @@ definePageMeta({
   layout: 'dashboard',
 })
 
-const accountSelector = useTemplateRef<InstanceType<typeof StrikeAccountSelector>>('account-selector')
+const accountSelector = useTemplateRef('account-selector')
 const handle = computed(() => accountSelector.value?.connection?.profile?.handle)
 
 const clearAccount = () => {
   accountSelector.value?.clearConnection()
 }
+
+const isEditMode = computed(() => accountSelector.value?.isEditMode)
 </script>
 
 <template>
@@ -19,6 +21,6 @@ const clearAccount = () => {
 
     <StrikeAccountSelector ref="account-selector" @clear-account="clearAccount" />
 
-    <StrikeInvoice v-if="handle" class="mt-4" :handle="handle" />
+    <StrikeInvoice v-if="handle && !isEditMode" class="mt-4" :handle="handle" />
   </div>
 </template>

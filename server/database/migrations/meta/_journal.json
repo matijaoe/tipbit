@@ -43,6 +43,13 @@
       "when": 1741548658402,
       "tag": "0005_safe_shooting_star",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1741987916692,
+      "tag": "0006_mushy_toad",
+      "breakpoints": true
     }
   ]
 }
