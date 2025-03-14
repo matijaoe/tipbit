@@ -6,7 +6,7 @@ alwaysApply: false
 ## Testing Strategy
 
 ### Unit Tests
-- Vitest, Vue Test Utils.
+- Vitest, Vue Test Utils, Vue Testing Library
 - Coverage: authentication, payment logic, key UI components.
 
 ### Integration & E2E Tests
