@@ -1,4 +1,4 @@
-// TODO
+// TODO: is it used?
 export default defineEventHandler(async (event) => {
   await requireUserSession(event)
   const body = await readBody(event)

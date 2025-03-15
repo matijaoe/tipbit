@@ -1,6 +1,13 @@
-# Nuxt Minimal Starter
+# Tipbit - Bitcoin Lightning Network Tipping Platform
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+A simple, privacy-focused Bitcoin tipping platform leveraging the Lightning Network.
+
+## Features
+
+- **Frictionless Bitcoin tipping** via Lightning Network (using Strike, Coinos, Alby APIs)
+- **Multiple user profiles** per account, each with customizable payment methods
+- **Privacy-first**: anonymous tipping by default, optional profile-sharing
+- **Secure API key management**: All API keys are encrypted in the database
 
 ## Setup
 
@@ -15,10 +22,21 @@ pnpm install
 
 # yarn
 yarn install
-
-# bun
-bun install
 ```
+
+### Security Setup
+
+Before running the application, you need to generate an encryption key for securing sensitive data:
+
+```bash
+# Generate an encryption key
+pnpm security:generate-key
+
+# Add the generated key to your .env file
+# NUXT_ENCRYPTION_KEY=your-generated-key
+```
+
+See the [security documentation](./docs/security.md) for more information.
 
 ## Development Server
 
@@ -72,4 +90,12 @@ yarn preview
 bun run preview
 ```
 
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+## Tech Stack
+
+- **Frontend:** Nuxt 3 (TypeScript, Vue Composition API), Tailwind CSS, shadcn-vue components
+- **Backend:** Nuxt server routes, Nitro endpoints, TypeScript
+- **Database:** SQLite with Drizzle ORM
+- **Authentication:** OAuth (GitHub, Google, X, Twitch)
+- **Security:** libsodium for encryption of sensitive data
+
+Check out the [documentation](./docs) for more information.

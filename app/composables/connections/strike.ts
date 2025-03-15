@@ -1,9 +1,12 @@
-import type { ResultSet } from '@libsql/client'
 import type { StrikeAccountProfile } from '~~/lib/strike/api/types'
-import type { StrikeConnection } from '~~/server/utils/db'
+import type { StrikeConnectionRequestBody } from '~~/server/api/connections/strike/index.post'
+import type { PaymentConnection, StrikeConnection } from '~~/server/utils/db'
 
-type StrikeConnectionWithProfile = StrikeConnection & {
-  profile?: StrikeAccountProfile
+type ConnectionWithStrikeConnectionAndProfile = PaymentConnection & {
+  strikeConnection: Omit<StrikeConnection, 'apiKey'> & {
+    hasApiKey: boolean
+  }
+  profile: StrikeAccountProfile
 }
 
 export const useStrikeConnection = () => {
@@ -14,10 +17,10 @@ export const useStrikeConnection = () => {
     status: connectionStatus,
     refresh: refetchUserConnection,
     clear: clearUserConnection,
-  } = useFetch<StrikeConnectionWithProfile>('/api/connections/strike/me', {
+  } = useFetch<ConnectionWithStrikeConnectionAndProfile>('/api/connections/strike/me', {
     key: 'user:connection:strike',
     query: {
-      profile: true,
+      withProfile: true,
     },
     immediate: loggedIn.value,
   })
@@ -26,22 +29,16 @@ export const useStrikeConnection = () => {
   const isConnectionLoading = computed(() => connectionStatus.value === 'pending')
   const connectionId = computed(() => connection.value?.id)
 
-  const profile = computed(() => connection.value?.profile)
-  const profileHandle = computed(() => profile.value?.handle)
+  const profile = toRef(() => connection.value?.profile)
+  const profileHandle = toRef(() => profile.value?.handle)
 
-  const connectAccount = async (handle: string) => {
-    if (!handle) {
-      throw new Error('Strike handle is required')
-    }
-
+  const connectAccount = async (body: StrikeConnectionRequestBody) => {
     try {
-      await $fetch('/api/connections/strike', {
+      const res = await $fetch('/api/connections/strike', {
         method: 'POST',
-        body: {
-          handle,
-        },
+        body,
       })
-      await refetchUserConnection()
+      return res
     } catch (err) {
       console.error('Error connecting Strike account', err)
       throw err
@@ -53,17 +50,35 @@ export const useStrikeConnection = () => {
       return
     }
 
-    const res = await $fetch<ResultSet>(`/api/connections/strike/${connectionId.value}`, {
-      method: 'DELETE',
-    })
+    try {
+      const connId = connectionId.value
+      if (!connId) {
+        throw new Error('No connection ID found')
+      }
 
-    if (!res.rowsAffected) {
-      throw new Error('Failed to disconnect Strike account')
+      const deletedConnection = await $fetch(`/api/connections/strike/${connId}`, {
+        method: 'DELETE',
+      })
+
+      console.log('🗑️ deletedConnection', deletedConnection)
+
+      if (!deletedConnection) {
+        console.warn('No connection was deleted')
+      }
+
+      // Clear the connection data regardless of API result
+      clearUserConnection()
+      return true
+    } catch (error) {
+      console.error('Error disconnecting Strike account:', error)
+
+      // Still clear the connection from local state
+      clearUserConnection()
+
+      // Only re-throw if we want to show an error to the user
+      // throw error
+      return true
     }
-
-    clearUserConnection()
-
-    return true
   }
 
   return {

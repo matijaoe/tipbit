@@ -1,8 +1,8 @@
 <script lang="ts" setup>
 import { useQRCode } from '@vueuse/integrations/useQRCode'
-import { cancelInvoice, getInvoices } from '~~/lib/strike/api/api'
+import { getInvoices } from '~~/lib/strike/api/api'
 import type { StrikeAccountProfile, StrikeInvoice } from '~~/lib/strike/api/types'
-import type { Invoice, InvoiceRequestWithReceiver } from '~~/lib/unified'
+import type { Invoice, InvoiceRequestWithReceiver } from '~~/lib/general'
 import { useToast } from './ui/toast'
 
 const props = defineProps<{
@@ -37,7 +37,6 @@ const [_isInvoicePending, setIsInvoicePending] = useToggle(false)
 const { toast } = useToast()
 
 const tip = async () => {
-  console.log('tip')
   setIsInvoicePending(true)
 
   const sats = satsAmount.value
@@ -98,12 +97,25 @@ const cancelPendingInvoice = async () => {
     })
     return
   }
-  const canceledInvoice = await cancelInvoice(invoiceId.value)
-  console.log('canceled invoice', canceledInvoice)
-  if (canceledInvoice?.state === 'CANCELLED') {
-    clearInvoice()
+
+  try {
+    // Use server API route instead of direct Strike API call
+    const canceledInvoice = await $fetch(`/api/invoices/${invoiceId.value}/cancel`, {
+      method: 'POST',
+    })
+
+    console.log('canceled invoice', canceledInvoice)
+
+    if (canceledInvoice?.state === 'CANCELLED') {
+      clearInvoice()
+      toast({
+        title: 'Invoice canceled',
+      })
+    }
+  } catch (error) {
+    console.error('Failed to cancel invoice:', error)
     toast({
-      title: 'Invoice canceled',
+      title: 'Failed to cancel invoice',
       variant: 'destructive',
     })
   }

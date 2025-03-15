@@ -3,7 +3,6 @@ import { handleOAuthLogin } from '~~/server/utils/auth'
 
 export default defineOAuthTwitchEventHandler({
   async onSuccess(event, { user: twitchUser }: { user: TwitchOAuthUser }) {
-    console.log('🔍 twitchUser', twitchUser)
     try {
       return await handleOAuthLogin(event, {
         id: twitchUser.id,

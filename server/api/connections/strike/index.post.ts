@@ -1,7 +1,22 @@
-import { eq } from 'drizzle-orm'
-import { createError, defineEventHandler, readBody } from 'h3'
+import { and, eq } from 'drizzle-orm'
+import { createError, defineEventHandler, readValidatedBody, H3Error } from 'h3'
+import { z } from 'zod'
 import { fetchProfileByHandle } from '~~/lib/strike/api/api'
-import { strikeConnections } from '~~/server/database/schema'
+import { createPaymentConnection, updatePaymentConnection } from '~~/server/utils'
+import { decryptFromClient, encryptForStorage } from '~~/server/utils/encryption'
+import type { StrikeServiceData } from '~~/server/utils/payment-connections'
+import { strikeHandleSchema } from '~~/server/utils/schemas'
+import { db } from '~~/server/database'
+import { paymentConnections, strikeConnections } from '~~/server/database/schema'
+
+const strikeConnectionSchema = z.object({
+  handle: strikeHandleSchema,
+  apiKey: z.string().optional(),
+  name: z.string().optional(),
+  connectionId: z.string().uuid().optional(),
+})
+
+export type StrikeConnectionRequestBody = z.infer<typeof strikeConnectionSchema>
 
 /**
  * API endpoint to connect a Strike account to a user
@@ -12,19 +27,11 @@ export default defineEventHandler(async (event) => {
   // Require user session
   const { user } = await requireUserSession(event)
 
-  // Get handle from request body
-  const { handle } = await readBody(event)
-
-  if (!handle) {
-    throw createError({
-      statusCode: 400,
-      message: 'Strike handle is required',
-    })
-  }
-
   try {
+    // Get and validate data from request body
+    const { handle, apiKey, name, connectionId } = await readValidatedBody(event, strikeConnectionSchema.parse)
+
     // Verify handle exists on Strike
-    // TODO: verify on the frontend first
     const accountProfile = await fetchProfileByHandle(handle)
 
     if (!accountProfile) {
@@ -41,41 +48,134 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    const db = useDB()
+    // Process API key if provided
+    let decryptedClientApiKey: string | null = null
+    if (apiKey) {
+      try {
+        // Decrypt the client-encrypted API key
+        decryptedClientApiKey = await decryptFromClient(apiKey)
+      } catch (error) {
+        console.error('Error processing Strike API key:', error)
+        throw createError({
+          statusCode: 500,
+          message: 'Failed to process API key',
+        })
+      }
+    }
 
-    // Check if user already has a Strike connection
-    const existingConnection = await db.query.strikeConnections.findFirst({
-      where: eq(strikeConnections.userId, user.id),
+    // Prepare Strike service data
+    const strikeServiceData: StrikeServiceData = {
+      strikeProfileId: accountProfile.id,
+      apiKey: decryptedClientApiKey,
+    }
+
+    // TODO: this should be greatly simplified
+
+    // Transaction to handle connection updates or creation in a single DB operation
+    const connection = await db.transaction(async (tx) => {
+      // If we're editing an existing connection
+      if (connectionId) {
+        // Get the specific connection we're editing
+        const existingConnection = await tx.query.paymentConnections.findFirst({
+          where: (pc) => and(eq(pc.id, connectionId), eq(pc.userId, user.id), eq(pc.serviceType, 'strike')),
+          with: {
+            strikeConnection: true,
+          },
+        })
+
+        if (!existingConnection) {
+          throw createError({
+            statusCode: 404,
+            message: 'Connection not found or not authorized to edit',
+          })
+        }
+
+        // Check if we're changing the Strike profile
+        const isSameStrikeProfile = existingConnection.strikeConnection?.strikeProfileId === accountProfile.id
+
+        if (isSameStrikeProfile) {
+          // Just update the existing connection
+          return await updatePaymentConnection(
+            connectionId,
+            {
+              name: name || `Strike (${handle})`,
+            },
+            {
+              apiKey: decryptedClientApiKey,
+            },
+            tx
+          )
+        } else {
+          // Different profile ID - delete the old connection
+          await tx.delete(paymentConnections).where(eq(paymentConnections.id, connectionId))
+
+          // Create a new one
+          const [newConnection] = await tx
+            .insert(paymentConnections)
+            .values({
+              userId: user.id,
+              serviceType: 'strike',
+              name: name || `Strike (${handle})`,
+              isEnabled: true,
+            })
+            .returning()
+
+          // Add the Strike-specific data
+          await tx.insert(strikeConnections).values({
+            connectionId: newConnection.id,
+            strikeProfileId: accountProfile.id,
+            apiKey: decryptedClientApiKey ? await encryptForStorage(decryptedClientApiKey) : null,
+          })
+
+          return newConnection
+        }
+      } else {
+        // We're creating a new connection
+
+        // Check if we already have a connection with this Strike profile
+        const existingConnection = await tx.query.paymentConnections.findFirst({
+          where: (pc) => and(eq(pc.userId, user.id), eq(pc.serviceType, 'strike')),
+          with: {
+            strikeConnection: true,
+          },
+        })
+
+        // Check if this connection has the same Strike profile ID
+        const isSameStrikeProfile = existingConnection?.strikeConnection?.strikeProfileId === accountProfile.id
+        if (existingConnection && isSameStrikeProfile) {
+          // Update the existing connection with the same Strike profile
+          return await updatePaymentConnection(
+            existingConnection.id,
+            {
+              name: name || `Strike (${handle})`,
+            },
+            {
+              apiKey: decryptedClientApiKey,
+            },
+            tx
+          )
+        } else {
+          // Create a new connection
+          return await createPaymentConnection(
+            user.id,
+            'strike',
+            strikeServiceData,
+            { name: name || `Strike (${handle})` },
+            // TODO: simplify this so we don't need to pass tx
+            tx
+          )
+        }
+      }
     })
 
-    if (existingConnection) {
-      // Update existing connection
-      const [updatedConnection] = await db
-        .update(strikeConnections)
-        .set({
-          strikeProfileId: accountProfile.id,
-          updatedAt: new Date(),
-        })
-        .where(eq(strikeConnections.userId, user.id))
-        .returning()
-
-      return updatedConnection
-    } else {
-      // Create new connection
-      const [newConnection] = await db
-        .insert(strikeConnections)
-        .values({
-          userId: user.id,
-          strikeProfileId: accountProfile.id,
-        })
-        .returning()
-
-      return newConnection
+    return {
+      ...connection,
+      hasApiKey: !!decryptedClientApiKey,
     }
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error connecting Strike account:', error)
 
-    if (error && typeof error === 'object' && 'statusCode' in error) {
+    if (error instanceof H3Error) {
       throw error
     }
 

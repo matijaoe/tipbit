@@ -7,7 +7,7 @@ alwaysApply: false
 
 - Naming: camelCase for variables/functions, PascalCase for classes, kebab-case for file names.
 - Strict TypeScript types enforced.
-- Always use `const` for variables, `let` for mutable variables. Do not use function declarations, always use arrow functions.
+- Always use `const` for variables. Do not use function declarations, always use arrow functions.
 - Use type over interface.
 - Use Vue composables when appropriate.
 - Async/await over callbacks.

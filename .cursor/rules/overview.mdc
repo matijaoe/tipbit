@@ -18,7 +18,12 @@ Tipbit is a simple, privacy-focused Bitcoin tipping platform leveraging the Ligh
 - **Profile Management:** Authenticated users (OAuth via GitHub, Google, X, Twitch) create multiple profiles, connect Lightning payment services (Strike, Coinos, Alby), and manage payment method priority through drag-and-drop UI.
 
 ## Technical Stack & Deployment
+- Always use pnpm for commands
 - **Frontend:** Nuxt 3 (TypeScript, Vue Composition API), Tailwind CSS, shadcn-vue components.
 - **Backend:** Nuxt server routes, Nitro API endpoints.
 - **Database:** SQLite with Drizzle ORM (minimal data storage).
 - **Authentication:** OAuth initially, future support for Passkeys/Nostr.
+
+## Import aliases
+- `~~/...` - import from root
+- `~/..` - import from app

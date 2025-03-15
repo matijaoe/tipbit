@@ -6,9 +6,12 @@ alwaysApply: false
 ## User Management
 
 ### Authentication
-- OAuth via GitHub, Google, X, Twitch ([Nuxt auth utils](mdc:https:/nuxt.com/modules/auth-utils)).
+- OAuth via GitHub, Google, X, Twitch (@Nuxt Auth Utils).
 - Future support: Passkey, Nostr login, 2FA (TOTP/security keys).
 
 ### Multi-Profile Support
-- Users can manage multiple profiles per account, each with a unique public handle.
-- Profiles have independent payment connections.
+- By default, a profile is created for the user when they sign up, with a default handle (e.g. `@user123`)
+- Users can manage multiple profiles per account, each with a unique public handle
+- Public handle can be changed at any time.
+- Profiles share payment connections, but can have individual ordering preferences.
+- Profile can have unique branding, public name, and avatar
