@@ -37,7 +37,6 @@ const [_isInvoicePending, setIsInvoicePending] = useToggle(false)
 const { toast } = useToast()
 
 const tip = async () => {
-  console.log('tip')
   setIsInvoicePending(true)
 
   const sats = satsAmount.value

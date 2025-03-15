@@ -76,13 +76,13 @@ export const encryptForServer = async (data: string): Promise<string> => {
     throw new Error('Libsodium initialization failed')
   }
 
-  const { transitEncryptionPublicKey } = useRuntimeConfig()
+  const config = useRuntimeConfig()
 
-  if (!transitEncryptionPublicKey) {
+  if (!config.public.transitPublicKey) {
     throw new Error('Public encryption key is missing')
   }
 
-  const encrypted = sodium.crypto_box_seal(sodium.from_string(data), sodium.from_base64(transitEncryptionPublicKey))
+  const encrypted = sodium.crypto_box_seal(sodium.from_string(data), sodium.from_base64(config.public.transitPublicKey))
 
   return sodium.to_base64(encrypted)
 }
@@ -116,16 +116,16 @@ export const decryptFromClient = async (encryptedData: string): Promise<string> 
     throw new Error('Libsodium initialization failed')
   }
 
-  const { transitPrivateKey, transitPublicKey } = useRuntimeConfig()
+  const config = useRuntimeConfig()
 
-  if (!transitPrivateKey) {
+  if (!config.transitPrivateKey) {
     throw new Error('Private encryption key is missing')
   }
 
   const decrypted = sodium.crypto_box_seal_open(
     sodium.from_base64(encryptedData),
-    sodium.from_base64(transitPublicKey),
-    sodium.from_base64(transitPrivateKey)
+    sodium.from_base64(config.public.transitPublicKey),
+    sodium.from_base64(config.transitPrivateKey)
   )
 
   return sodium.to_string(decrypted)
@@ -159,14 +159,14 @@ export const encryptForStorage = async (data: string): Promise<string> => {
     throw new Error('Libsodium initialization failed')
   }
 
-  const { storageEncryptionKey } = useRuntimeConfig()
+  const config = useRuntimeConfig()
 
-  if (!storageEncryptionKey) {
+  if (!config.storageEncryptionKey) {
     throw new Error('Storage encryption key is missing')
   }
 
   const nonce = sodium.randombytes_buf(sodium.crypto_secretbox_NONCEBYTES)
-  const keyBuffer = sodium.from_base64(storageEncryptionKey)
+  const keyBuffer = sodium.from_base64(config.storageEncryptionKey)
   const cipher = sodium.crypto_secretbox_easy(sodium.from_string(data), nonce, keyBuffer)
 
   // Combine nonce and cipher for storage
@@ -209,16 +209,16 @@ export const decryptFromStorage = async (encryptedData: string): Promise<string>
     throw new Error('Libsodium initialization failed')
   }
 
-  const { storageEncryptionKey } = useRuntimeConfig()
+  const config = useRuntimeConfig()
 
-  if (!storageEncryptionKey) {
+  if (!config.storageEncryptionKey) {
     throw new Error('Storage encryption key is missing')
   }
 
   const combined = sodium.from_base64(encryptedData)
   const nonce = combined.slice(0, sodium.crypto_secretbox_NONCEBYTES)
   const cipher = combined.slice(sodium.crypto_secretbox_NONCEBYTES)
-  const keyBuffer = sodium.from_base64(storageEncryptionKey)
+  const keyBuffer = sodium.from_base64(config.storageEncryptionKey)
 
   const decrypted = sodium.crypto_secretbox_open_easy(cipher, nonce, keyBuffer)
   return sodium.to_string(decrypted)

@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { isBoolean } from 'es-toolkit'
 import { ArrowLeft, ChevronRight, Edit, Eye, EyeOff, X as XIcon } from 'lucide-vue-next'
 import { useToast } from '~/components/ui/toast'
 import { useStrikeConnection } from '~/composables/connections/strike'
@@ -15,6 +14,7 @@ const {
   isConnectionLoading,
   connectAccount,
   disconnectAccount,
+  refetchUserConnection,
 
   // Strike profile
   profile,
@@ -22,12 +22,12 @@ const {
 } = useStrikeConnection()
 
 // Edit mode state
-const isEditMode = ref(false)
+const [isEditMode, toggleEditMode] = useToggle(false)
 const isDetailsOpen = ref(false)
 const showApiKey = ref(false)
 
 // Check if API key is connected
-const hasApiKey = computed(() => isBoolean(connection.value?.apiKey) && connection.value.apiKey === true)
+const hasApiKey = computed(() => connection.value?.hasApiKey)
 
 // Form data
 const localHandle = ref(profileHandle.value ?? '')
@@ -118,11 +118,7 @@ const createConnection = async (includeApiKey = false) => {
       requestBody.apiKey = await encryptForServer(apiKey.value)
     }
 
-    // Call API with collected data
-    const response = await $fetch('/api/connections/strike', {
-      method: 'POST',
-      body: requestBody,
-    })
+    const response = await connectAccount(requestBody)
 
     if (!response) {
       throw new Error('Failed to connect Strike account')
@@ -137,7 +133,10 @@ const createConnection = async (includeApiKey = false) => {
           : 'Strike account connected successfully.',
     })
 
-    finishSetup()
+    await refetchUserConnection()
+
+    // exit edit mode
+    toggleEditMode(false)
   } catch (error) {
     console.error('Error connecting Strike account:', error)
     toast({
@@ -158,16 +157,8 @@ const addApiKey = () => {
   createConnection(true)
 }
 
-// Finish the setup process
-const finishSetup = () => {
-  isEditMode.value = false
-  currentStep.value = 1
-  // Refresh connection data
-  connectAccount(localHandle.value)
-}
-
-const toggleEditMode = () => {
-  isEditMode.value = !isEditMode.value
+const toggleEditModeHandler = () => {
+  toggleEditMode()
 
   // Reset form values when entering edit mode
   if (isEditMode.value) {
@@ -297,7 +288,7 @@ defineExpose({
             <img v-if="profile.avatarUrl" :src="profile.avatarUrl" alt="Avatar" class="size-8 rounded-full" />
           </div>
           <div class="flex items-center gap-2">
-            <Button variant="ghost" size="icon" @click.stop="toggleEditMode">
+            <Button variant="ghost" size="icon" @click.stop="toggleEditModeHandler">
               <Edit class="h-4 w-4" />
             </Button>
             <Button variant="ghost" size="icon" @click.stop="clearConnection">

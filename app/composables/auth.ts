@@ -7,8 +7,8 @@ export const useAuth = () => {
     clearCurrentUser()
     clearNuxtData()
     navigateTo('/login')
-    // TODO: Do I need to call
-    // $fetch('/api/auth/logout')?
+    // TODO: Do I really need to call server?
+    $fetch('/api/auth/logout')
   }
 
   return {

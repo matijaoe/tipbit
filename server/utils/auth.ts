@@ -151,7 +151,6 @@ async function createUniqueHandle(tx: Transaction, baseHandle: string): Promise<
     const existingProfile = await tx.query.profiles.findFirst({
       where: eq(profiles.handle, handle),
     })
-    console.log('🔍 existingProfile', existingProfile)
 
     // If the handle doesn't exist, it's unique
     if (!existingProfile) {
@@ -160,7 +159,6 @@ async function createUniqueHandle(tx: Transaction, baseHandle: string): Promise<
 
     // Handle exists, add a number at the end and try again
     handle = `${baseHandle}${counter}`
-    console.log('🔍 handle', handle)
     counter++
   }
 }

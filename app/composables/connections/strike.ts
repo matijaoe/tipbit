@@ -1,10 +1,11 @@
 import type { ResultSet } from '@libsql/client'
 import type { StrikeAccountProfile } from '~~/lib/strike/api/types'
+import type { StrikeConnectionRequestBody } from '~~/server/api/connections/strike/index.post'
 import type { StrikeConnection } from '~~/server/utils/db'
 
-type StrikeConnectionWithProfile = StrikeConnection & {
+type StrikeConnectionWithProfile = Omit<StrikeConnection, 'apiKey'> & {
   profile?: StrikeAccountProfile
-  type?: 'handle' | 'api_key'
+  hasApiKey: boolean
 }
 
 export const useStrikeConnection = () => {
@@ -18,7 +19,7 @@ export const useStrikeConnection = () => {
   } = useFetch<StrikeConnectionWithProfile>('/api/connections/strike/me', {
     key: 'user:connection:strike',
     query: {
-      profile: true,
+      withProfile: true,
     },
     immediate: loggedIn.value,
   })
@@ -26,47 +27,19 @@ export const useStrikeConnection = () => {
   const isConnected = computed(() => !!connection.value)
   const isConnectionLoading = computed(() => connectionStatus.value === 'pending')
   const connectionId = computed(() => connection.value?.id)
-  const connectionType = computed(() => connection.value?.type ?? 'handle')
 
-  const profile = computed(() => connection.value?.profile)
-  const profileHandle = computed(() => profile.value?.handle)
+  const profile = toRef(() => connection.value?.profile)
+  const profileHandle = toRef(() => profile.value?.handle)
 
-  const connectAccount = async (handle: string) => {
-    if (!handle) {
-      throw new Error('Strike handle is required')
-    }
-
+  const connectAccount = async (body: StrikeConnectionRequestBody) => {
     try {
-      await $fetch('/api/connections/strike', {
+      const res = await $fetch('/api/connections/strike', {
         method: 'POST',
-        body: {
-          handle,
-          type: 'handle',
-        },
+        body,
       })
-      await refetchUserConnection()
+      return res
     } catch (err) {
       console.error('Error connecting Strike account', err)
-      throw err
-    }
-  }
-
-  const connectWithApiKey = async (apiKey: string) => {
-    if (!apiKey) {
-      throw new Error('Strike API key is required')
-    }
-
-    try {
-      await $fetch('/api/connections/strike', {
-        method: 'POST',
-        body: {
-          apiKey,
-          type: 'api_key',
-        },
-      })
-      await refetchUserConnection()
-    } catch (err) {
-      console.error('Error connecting Strike account with API key', err)
       throw err
     }
   }
@@ -94,10 +67,8 @@ export const useStrikeConnection = () => {
     connection,
     isConnected,
     isConnectionLoading,
-    connectionType,
     refetchUserConnection,
     connectAccount,
-    connectWithApiKey,
     disconnectAccount,
 
     // Strike profile

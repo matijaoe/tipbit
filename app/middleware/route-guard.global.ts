@@ -23,7 +23,6 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   if (isDashboardRoute(to)) {
     if (!loggedIn.value) {
-      console.log('dashboard route requires authentication')
       return navigateTo('/login')
     }
     return
@@ -31,7 +30,6 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   if (isAuthRoute(to)) {
     if (loggedIn.value) {
-      console.log('already authenticated, redirecting to home')
       return navigateTo('/')
     }
     return

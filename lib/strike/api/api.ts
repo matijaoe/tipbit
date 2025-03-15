@@ -8,172 +8,138 @@ import type {
 } from '~~/lib/strike/api/types'
 import { decryptFromStorage } from '~~/server/utils/encryption'
 
-type ConnectionOpts = { type: 'global' } | { type: 'api_key'; encryptedApiKey: string }
+// Define options type for API calls
+export type StrikeApiOptions = {
+  encryptedUserKey?: string
+  // Can easily add more options here in the future
+}
 
-/**
- * Creates a Strike API client with the specified connection type
- */
-const createStrikeApi = async (opts: ConnectionOpts = { type: 'global' }) => {
-  const config = useRuntimeConfig()
+// Create a reusable factory for Strike API clients
+export const createStrikeApiClient = {
+  // Cached global client instance
+  _globalClient: null as ReturnType<typeof $fetch.create> | null,
 
-  // Default headers with global API key
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  }
+  // Create base client with shared configuration
+  _createBaseClient(headers: Record<string, string>) {
+    const config = useRuntimeConfig()
+    return $fetch.create({
+      baseURL: config.public.strikeApiUrl,
+      timeout: 5000,
+      headers: {
+        'Content-Type': 'application/json',
+        ...headers,
+      },
+    })
+  },
 
-  // Set Authorization header based on connection type
-  if (opts.type === 'global') {
-    headers.Authorization = `Bearer ${config.public.strikeApiKey}`
-  } else if (opts.type === 'api_key') {
-    // Decrypt the API key using storage decryption
-    const apiKey = await decryptFromStorage(opts.encryptedApiKey)
-    headers.Authorization = `Bearer ${apiKey}`
-  }
+  _createAuthorizationHeader(apiKey: string) {
+    return `Bearer ${apiKey}`
+  },
 
-  return $fetch.create({
-    baseURL: config.public.strikeApiUrl,
-    timeout: 5000,
-    headers,
-  })
+  // Get or create global client
+  global() {
+    if (this._globalClient) {
+      return this._globalClient
+    }
+
+    const config = useRuntimeConfig()
+    this._globalClient = this._createBaseClient({
+      Authorization: this._createAuthorizationHeader(config.strikeApiKey),
+    })
+
+    return this._globalClient
+  },
+
+  // Create user-specific client
+  async withUserKey(encryptedUserKey: string) {
+    const apiKey = await decryptFromStorage(encryptedUserKey)
+    return this._createBaseClient({
+      Authorization: this._createAuthorizationHeader(apiKey),
+    })
+  },
 }
 
 /**
- * Legacy method for compatibility - uses global API key
+ * Composable that provides a Strike API client
+ * @param options Optional API configuration
+ * @returns Configured fetch instance for Strike API
  */
-const useStrikeApi = () => {
-  const config = useRuntimeConfig()
-  return $fetch.create({
-    baseURL: config.public.strikeApiUrl,
-    timeout: 5000,
-    headers: {
-      Authorization: `Bearer ${config.public.strikeApiKey}`,
-      'Content-Type': 'application/json',
-    },
-  })
+export const useStrikeApi = async (options?: StrikeApiOptions) => {
+  const { encryptedUserKey } = options ?? {}
+  if (encryptedUserKey) {
+    console.log('🔑 [Using user api key]', encryptedUserKey)
+    return await createStrikeApiClient.withUserKey(encryptedUserKey)
+  }
+  console.log('🌍 [Using global api key]')
+  return createStrikeApiClient.global()
 }
 
-export const issueInvoice = async (body: StrikeIssueInvoiceRequest) => {
-  const strikeApiFetch = useStrikeApi()
-  return await strikeApiFetch<StrikeInvoice>('/invoices', {
+export const issueInvoice = async (body: StrikeIssueInvoiceRequest, options?: StrikeApiOptions) => {
+  const strikeApi = await useStrikeApi(options)
+  return await strikeApi<StrikeInvoice>('/invoices', {
     method: 'POST',
     body,
   })
 }
 
-export const issueInvoiceForReceiver = async (handle: string, body: StrikeIssueInvoiceRequest) => {
-  const strikeApiFetch = useStrikeApi()
-  return await strikeApiFetch<StrikeInvoice>(`/invoices/handle/${handle}`, {
+export const issueInvoiceForReceiver = async (
+  handle: string,
+  body: StrikeIssueInvoiceRequest,
+  options?: StrikeApiOptions
+) => {
+  const strikeApi = await useStrikeApi(options)
+  return await strikeApi<StrikeInvoice>(`/invoices/handle/${handle}`, {
     method: 'POST',
     body,
     headers: undefined,
   })
 }
 
-export const createQuote = async (invoiceId: string) => {
-  const strikeApiFetch = useStrikeApi()
-  return await strikeApiFetch<StrikeQuote>(`/invoices/${invoiceId}/quote`, {
+export const createQuote = async (invoiceId: string, options?: StrikeApiOptions) => {
+  const strikeApi = await useStrikeApi(options)
+  return await strikeApi<StrikeQuote>(`/invoices/${invoiceId}/quote`, {
     method: 'POST',
   })
 }
 
-export const getInvoices = async () => {
-  const strikeApiFetch = useStrikeApi()
-  return await strikeApiFetch<StrikeInvoice[]>('/invoices', {
+export const getInvoices = async (options?: StrikeApiOptions) => {
+  const strikeApi = await useStrikeApi(options)
+  return await strikeApi<StrikeInvoice[]>('/invoices', {
     method: 'GET',
   })
 }
 
-export const getInvoice = async (invoiceId: string) => {
-  const strikeApiFetch = useStrikeApi()
-  return await strikeApiFetch<StrikeInvoice>(`/invoices/${invoiceId}`, {
+export const getInvoice = async (invoiceId: string, options?: StrikeApiOptions) => {
+  const strikeApi = await useStrikeApi(options)
+  return await strikeApi<StrikeInvoice>(`/invoices/${invoiceId}`, {
     method: 'GET',
   })
 }
 
-export const cancelInvoice = async (invoiceId: string) => {
-  const strikeApiFetch = useStrikeApi()
-  return await strikeApiFetch<StrikeInvoice>(`/invoices/${invoiceId}/cancel`, {
+export const cancelInvoice = async (invoiceId: string, options?: StrikeApiOptions) => {
+  const strikeApi = await useStrikeApi(options)
+  return await strikeApi<StrikeInvoice>(`/invoices/${invoiceId}/cancel`, {
     method: 'PATCH',
   })
 }
 
-export const fetchProfileByHandle = async (handle: string) => {
-  const strikeApiFetch = useStrikeApi()
-  return await strikeApiFetch<StrikeAccountProfile>(`/accounts/handle/${handle}/profile`, {
+export const fetchProfileByHandle = async (handle: string, options?: StrikeApiOptions) => {
+  const strikeApi = await useStrikeApi(options)
+  return await strikeApi<StrikeAccountProfile>(`/accounts/handle/${handle}/profile`, {
     method: 'GET',
   })
 }
 
-export const fetchProfileById = async (id: string) => {
-  const strikeApiFetch = useStrikeApi()
-  return await strikeApiFetch<StrikeAccountProfile>(`/accounts/${id}/profile`, {
+export const fetchProfileById = async (id: string, options?: StrikeApiOptions) => {
+  const strikeApi = await useStrikeApi(options)
+  return await strikeApi<StrikeAccountProfile>(`/accounts/${id}/profile`, {
     method: 'GET',
   })
 }
 
-/**
- * Issues an invoice using a specific connection (either global or with user's API key)
- */
-export const issueInvoiceWithConnection = async (
-  handle: string,
-  body: StrikeIssueInvoiceRequest,
-  connection?: { type: 'handle' | 'api_key'; apiKey?: string }
-) => {
-  const strikeApiFetch =
-    connection?.type === 'api_key' && connection.apiKey
-      ? await createStrikeApi({ type: 'api_key', encryptedApiKey: connection.apiKey })
-      : useStrikeApi()
-
-  return await strikeApiFetch<StrikeInvoice>(`/invoices/handle/${handle}`, {
-    method: 'POST',
-    body,
-    headers: undefined,
-  })
-}
-
-/**
- * Fetches a profile using either the global API key or a user's encrypted API key
- */
-export const fetchProfileWithConnection = async (
-  idOrHandle: string,
-  isHandle: boolean = false,
-  connection?: { type: 'handle' | 'api_key'; apiKey?: string }
-) => {
-  const strikeApiFetch =
-    connection?.type === 'api_key' && connection.apiKey
-      ? await createStrikeApi({ type: 'api_key', encryptedApiKey: connection.apiKey })
-      : useStrikeApi()
-
-  const endpoint = isHandle ? `/accounts/handle/${idOrHandle}/profile` : `/accounts/${idOrHandle}/profile`
-
-  return await strikeApiFetch<StrikeAccountProfile>(endpoint, {
-    method: 'GET',
-  })
-}
-
-// TODO: rework this so it doesn't ever use the global API key
-export const createReceiveRequest = async (body: StrikeCreateReceiveRequest) => {
-  const strikeApiFetch = useStrikeApi()
-  return await strikeApiFetch<StrikeReceiveRequest>('/receive-requests', {
-    method: 'POST',
-    body,
-  })
-}
-
-/**
- * Creates a receive request using either the global API key or a user's encrypted API key
- */
-// called only if user has api key defined for their connection
-export const createReceiveRequestWithConnection = async (
-  body: StrikeCreateReceiveRequest,
-  connection?: { type: 'handle' | 'api_key'; apiKey?: string }
-) => {
-  const strikeApiFetch =
-    connection?.type === 'api_key' && connection.apiKey
-      ? await createStrikeApi({ type: 'api_key', encryptedApiKey: connection.apiKey })
-      : useStrikeApi()
-
-  return await strikeApiFetch<StrikeReceiveRequest>('/receive-requests', {
+export const createReceiveRequest = async (body: StrikeCreateReceiveRequest, options?: StrikeApiOptions) => {
+  const strikeApi = await useStrikeApi(options)
+  return await strikeApi<StrikeReceiveRequest>('/receive-requests', {
     method: 'POST',
     body,
   })

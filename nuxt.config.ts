@@ -58,9 +58,9 @@ export default defineNuxtConfig({
     public: {
       transitPublicKey: process.env.NUXT_PUBLIC_TRANSIT_PUBLIC_KEY,
       // TODO: move out of public?
-      strikeApiKey: process.env.NUXT_PUBLIC_STRIKE_API_KEY,
       strikeApiUrl: process.env.NUXT_PUBLIC_STRIKE_API_URL,
     },
+    strikeApiKey: process.env.NUXT_STRIKE_API_KEY,
     dbFileName: process.env.DB_FILE_NAME,
     transitPrivateKey: process.env.NUXT_TRANSIT_PRIVATE_KEY,
     storageEncryptionKey: process.env.NUXT_STORAGE_ENCRYPTION_KEY,
