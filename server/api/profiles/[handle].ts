@@ -1,6 +1,13 @@
 import { eq } from 'drizzle-orm'
-import { createError, defineEventHandler, getRouterParam } from 'h3'
+import { omit } from 'es-toolkit/compat'
+import { createError, defineEventHandler, getValidatedRouterParams } from 'h3'
+import { z } from 'zod'
 import { profiles } from '~~/server/database/schema'
+import { handleSchema } from '~~/server/utils/schemas'
+
+const paramsSchema = z.object({
+  handle: handleSchema,
+})
 
 /**
  * API endpoint to get profile data by handle
@@ -8,50 +15,20 @@ import { profiles } from '~~/server/database/schema'
  * GET /api/profiles/:handle
  */
 export default defineEventHandler(async (event) => {
-  const handle = getRouterParam(event, 'handle')
+  const { handle } = await getValidatedRouterParams(event, paramsSchema.parse)
 
-  if (!handle) {
+  const profile = await useDB().query.profiles.findFirst({
+    where: eq(profiles.handle, handle),
+  })
+
+  if (!profile) {
     throw createError({
-      statusCode: 400,
-      message: 'Profile handle is required',
+      statusCode: 404,
+      message: 'Profile not found',
     })
   }
 
-  try {
-    const profile = await useDB().query.profiles.findFirst({
-      where: eq(profiles.handle, handle),
-      with: {
-        user: {
-          with: {
-            strikeConnection: true,
-          },
-        },
-      },
-    })
+  const transformedProfile = omit(profile, ['userId'])
 
-    // Transform the result
-    const transformedProfile = profile
-      ? {
-          ...profile,
-          strikeHandle: profile.user.strikeConnection?.handle,
-          // Remove user data
-          user: undefined,
-        }
-      : null
-
-    if (!transformedProfile) {
-      throw createError({
-        statusCode: 404,
-        message: 'Profile not found',
-      })
-    }
-
-    return transformedProfile
-  } catch (error) {
-    console.error(`Error fetching profile with handle ${handle}:`, error)
-    throw createError({
-      statusCode: 500,
-      message: 'Failed to fetch profile data',
-    })
-  }
+  return transformedProfile
 })

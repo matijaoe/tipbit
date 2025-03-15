@@ -5,50 +5,8 @@
     {
       "idx": 0,
       "version": "6",
-      "when": 1740694632848,
-      "tag": "0000_cute_nebula",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "6",
-      "when": 1740930887404,
-      "tag": "0001_gorgeous_dreaming_celestial",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "6",
-      "when": 1740947177334,
-      "tag": "0002_yellow_gargoyle",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "6",
-      "when": 1741291160746,
-      "tag": "0003_neat_impossible_man",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "6",
-      "when": 1741291460789,
-      "tag": "0004_familiar_edwin_jarvis",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "6",
-      "when": 1741548658402,
-      "tag": "0005_safe_shooting_star",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "6",
-      "when": 1741987916692,
-      "tag": "0006_mushy_toad",
+      "when": 1742072778374,
+      "tag": "0000_chemical_kabuki",
       "breakpoints": true
     }
   ]

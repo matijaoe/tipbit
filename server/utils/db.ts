@@ -19,3 +19,6 @@ export type StrikeConnectionInsert = typeof tables.strikeConnections.$inferInser
 
 export type AuthConnection = typeof tables.authConnections.$inferSelect
 export type AuthConnectionInsert = typeof tables.authConnections.$inferInsert
+
+export type PaymentConnection = typeof tables.paymentConnections.$inferSelect
+export type PaymentConnectionInsert = typeof tables.paymentConnections.$inferInsert

@@ -23,3 +23,7 @@ Tipbit is a simple, privacy-focused Bitcoin tipping platform leveraging the Ligh
 - **Backend:** Nuxt server routes, Nitro API endpoints.
 - **Database:** SQLite with Drizzle ORM (minimal data storage).
 - **Authentication:** OAuth initially, future support for Passkeys/Nostr.
+
+## Import aliases
+- `~~/...` - import from root
+- `~/..` - import from app

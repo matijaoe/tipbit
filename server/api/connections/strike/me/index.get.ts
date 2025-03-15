@@ -1,6 +1,7 @@
+import { and, desc, eq } from 'drizzle-orm'
+import { omit } from 'es-toolkit'
 import { z } from 'zod'
 import { fetchProfileById } from '~~/lib/strike/api/api'
-import { strikeConnections } from '~~/server/database/schema'
 
 const querySchema = z.object({
   withProfile: z.union([
@@ -20,33 +21,42 @@ export default defineEventHandler(async (event) => {
 
   const db = useDB()
 
-  const _connection = await db.query.strikeConnections.findFirst({
-    where: eq(strikeConnections.userId, user.id),
+  // Find Strike connection through the payment connections table
+  const connection = await db.query.paymentConnections.findFirst({
+    where: (pc) => and(eq(pc.userId, user.id), eq(pc.serviceType, 'strike'), eq(pc.isEnabled, true)),
+    with: {
+      strikeConnection: true,
+    },
+    // just in case there are multiple connections, get the latest one (but there shouldn't be)
+    orderBy: (pc) => [desc(pc.createdAt)],
   })
 
-  if (!_connection) {
-    createError({
+  if (!connection || !connection.strikeConnection) {
+    throw createError({
       statusCode: 404,
       statusMessage: 'Connection not found',
     })
-    return null
   }
 
-  const sanitizedConnection = sanitizeStrikeConnection(_connection)
-
   if (withProfile) {
-    const encryptedUserKey = _connection.apiKey
+    const encryptedUserKey = connection.strikeConnection.apiKey
 
     const profile = await fetchProfileById(
-      _connection.strikeProfileId,
+      connection.strikeConnection.strikeProfileId,
       encryptedUserKey ? { encryptedUserKey } : undefined
     )
 
+    const strikeConnection = {
+      ...omit(connection.strikeConnection, ['apiKey']),
+      hasApiKey: !!encryptedUserKey,
+    }
+
     return {
-      ...sanitizedConnection,
+      ...connection,
+      strikeConnection,
       profile,
     }
   }
 
-  return sanitizedConnection
+  return connection
 })

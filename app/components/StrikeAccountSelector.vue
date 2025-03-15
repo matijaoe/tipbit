@@ -27,7 +27,7 @@ const isDetailsOpen = ref(false)
 const showApiKey = ref(false)
 
 // Check if API key is connected
-const hasApiKey = computed(() => connection.value?.hasApiKey)
+const hasApiKey = computed(() => connection.value?.strikeConnection.hasApiKey)
 
 // Form data
 const localHandle = ref(profileHandle.value ?? '')
@@ -116,6 +116,10 @@ const createConnection = async (includeApiKey = false) => {
     // Add API key if provided and requested
     if (includeApiKey && apiKey.value) {
       requestBody.apiKey = await encryptForServer(apiKey.value)
+    }
+
+    if (connection.value?.id && isEditMode) {
+      requestBody.connectionId = connection.value.id
     }
 
     const response = await connectAccount(requestBody)
@@ -227,6 +231,7 @@ defineExpose({
                 id="api-key-input"
                 ref="api-key-input"
                 v-model.trim="apiKey"
+                data-1p-ignore
                 full-width
                 :type="showApiKey ? 'text' : 'password'"
                 placeholder="Strike API Key"

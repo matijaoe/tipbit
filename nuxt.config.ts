@@ -17,7 +17,7 @@ export default defineNuxtConfig({
     fallback: 'dark',
     storage: 'cookie',
   },
-  compatibilityDate: '2024-11-01',
+  compatibilityDate: '2025-03-15',
   future: {
     compatibilityVersion: 4,
   },

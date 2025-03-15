@@ -4,11 +4,13 @@ import { CheckCircle, ArrowLeft } from 'lucide-vue-next'
 definePageMeta({
   layout: 'dashboard',
   validate: (route) => {
-    return ['strike', 'coinos', 'alby'].includes(route.params.service as string)
+    // TODO: type route properly
+    const service = (route.params as { service: string }).service as string
+    return ['strike', 'coinos', 'alby'].includes(service)
   },
 })
 
-const route = useRoute()
+const route = useRoute('dashboard-connections-service')
 const service = route.params.service as string
 
 // Service details mapping
