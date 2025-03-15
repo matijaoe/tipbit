@@ -175,85 +175,23 @@ type ConnectionData = {
 }
 
 /**
- * Create a new payment connection
- */
-export const createPaymentConnection = async (
-  userId: string,
-  serviceType: PaymentServiceType,
-  serviceData: StrikeServiceData | CoinosServiceData | AlbyServiceData,
-  connectionData?: ConnectionData
-) => {
-  return await db.transaction(async (tx) => {
-    // Create the base payment connection
-    const [connection] = await tx
-      .insert(paymentConnections)
-      .values({
-        userId,
-        serviceType,
-        isEnabled: true,
-        ...connectionData,
-      })
-      .returning()
-
-    // Based on service type, create the specific connection
-    switch (serviceType) {
-      case 'strike': {
-        const strikeData = serviceData as StrikeServiceData
-
-        // Encrypt API key if provided
-        let encryptedApiKey = null
-        if (strikeData.apiKey) {
-          encryptedApiKey = await encryptForStorage(strikeData.apiKey)
-        }
-
-        await tx.insert(strikeConnections).values({
-          connectionId: connection.id,
-          strikeProfileId: strikeData.strikeProfileId,
-          apiKey: encryptedApiKey,
-        })
-        break
-      }
-      case 'coinos': {
-        const coinosData = serviceData as CoinosServiceData
-        await tx.insert(coinosConnections).values({
-          connectionId: connection.id,
-          coinosUsername: coinosData.coinosUsername,
-          apiKey: await encryptForStorage(coinosData.apiKey),
-        })
-        break
-      }
-      case 'alby': {
-        const albyData = serviceData as AlbyServiceData
-        await tx.insert(albyConnections).values({
-          connectionId: connection.id,
-          albyId: albyData.albyId,
-          accessToken: await encryptForStorage(albyData.accessToken),
-          refreshToken: albyData.refreshToken ? await encryptForStorage(albyData.refreshToken) : null,
-        })
-        break
-      }
-    }
-
-    return connection
-  })
-}
-
-/**
  * Update an existing payment connection
  * @param connectionId ID of the connection to update
  * @param connectionData Partial connection data to update
  * @param serviceData Service-specific data to update
+ * @param tx Optional transaction to use instead of creating a new one
  * @returns The updated connection record
  */
 export const updatePaymentConnection = async (
   connectionId: string,
   connectionData?: Partial<ConnectionData>,
-  serviceData?: Partial<StrikeServiceData> | Partial<CoinosServiceData> | Partial<AlbyServiceData>
+  serviceData?: Partial<StrikeServiceData> | Partial<CoinosServiceData> | Partial<AlbyServiceData>,
+  tx?: any // Transaction parameter
 ) => {
-  return await db.transaction(async (tx) => {
-    // TODO: potentially don't need to fetch the connection if we pass service name
+  // Function to perform the update
+  const performUpdate = async (dbTx: any) => {
     // First, get the connection to check its type and verify it exists
-    const connection = await tx.query.paymentConnections.findFirst({
+    const connection = await dbTx.query.paymentConnections.findFirst({
       where: eq(paymentConnections.id, connectionId),
       with: {
         strikeConnection: true,
@@ -266,11 +204,9 @@ export const updatePaymentConnection = async (
       throw new Error(`Connection with ID ${connectionId} not found`)
     }
 
-    // Update base connection if name is provided
-    // TODO: check if any changes are needed, and only update if so
-    // but also rethink if we even want to be updating the base connection here
+    // Update base connection if data is provided
     if (!isEmpty(connectionData)) {
-      await tx
+      await dbTx
         .update(paymentConnections)
         .set({
           ...connectionData,
@@ -287,7 +223,7 @@ export const updatePaymentConnection = async (
           if (strikeData.apiKey !== undefined) {
             // Encrypt API key if provided
             const encryptedApiKey = strikeData.apiKey ? await encryptForStorage(strikeData.apiKey) : null
-            await tx
+            await dbTx
               .update(strikeConnections)
               .set({
                 apiKey: encryptedApiKey,
@@ -300,7 +236,7 @@ export const updatePaymentConnection = async (
         case 'coinos': {
           const coinosData = serviceData as Partial<CoinosServiceData>
           if (coinosData.apiKey) {
-            await tx
+            await dbTx
               .update(coinosConnections)
               .set({
                 apiKey: await encryptForStorage(coinosData.apiKey),
@@ -324,7 +260,7 @@ export const updatePaymentConnection = async (
 
           if (Object.keys(updates).length > 1) {
             // More than just updatedAt
-            await tx.update(albyConnections).set(updates).where(eq(albyConnections.connectionId, connectionId))
+            await dbTx.update(albyConnections).set(updates).where(eq(albyConnections.connectionId, connectionId))
           }
           break
         }
@@ -332,12 +268,92 @@ export const updatePaymentConnection = async (
     }
 
     // Return the updated connection
-    const [updatedConnection] = await tx
+    const [updatedConnection] = await dbTx
       .select()
       .from(paymentConnections)
       .where(eq(paymentConnections.id, connectionId))
       .limit(1)
 
     return updatedConnection
-  })
+  }
+
+  // If a transaction is provided, use it; otherwise create a new one
+  if (tx) {
+    return await performUpdate(tx)
+  } else {
+    return await db.transaction(performUpdate)
+  }
+}
+
+/**
+ * Create a new payment connection
+ */
+export const createPaymentConnection = async (
+  userId: string,
+  serviceType: PaymentServiceType,
+  serviceData: StrikeServiceData | CoinosServiceData | AlbyServiceData,
+  connectionData?: ConnectionData,
+  tx?: any // Transaction parameter
+) => {
+  // Function to perform the creation
+  const performCreate = async (dbTx: any) => {
+    // Create the base payment connection
+    const [connection] = await dbTx
+      .insert(paymentConnections)
+      .values({
+        userId,
+        serviceType,
+        isEnabled: true,
+        ...connectionData,
+      })
+      .returning()
+
+    // Based on service type, create the specific connection
+    switch (serviceType) {
+      case 'strike': {
+        const strikeData = serviceData as StrikeServiceData
+
+        // Encrypt API key if provided
+        let encryptedApiKey = null
+        if (strikeData.apiKey) {
+          encryptedApiKey = await encryptForStorage(strikeData.apiKey)
+        }
+
+        await dbTx.insert(strikeConnections).values({
+          connectionId: connection.id,
+          strikeProfileId: strikeData.strikeProfileId,
+          apiKey: encryptedApiKey,
+        })
+        break
+      }
+      case 'coinos': {
+        const coinosData = serviceData as CoinosServiceData
+        await dbTx.insert(coinosConnections).values({
+          connectionId: connection.id,
+          coinosUsername: coinosData.coinosUsername,
+          apiKey: await encryptForStorage(coinosData.apiKey),
+        })
+        break
+      }
+      case 'alby': {
+        const albyData = serviceData as AlbyServiceData
+        await dbTx.insert(albyConnections).values({
+          connectionId: connection.id,
+          albyId: albyData.albyId,
+          accessToken: await encryptForStorage(albyData.accessToken),
+          refreshToken: albyData.refreshToken ? await encryptForStorage(albyData.refreshToken) : null,
+        })
+        break
+      }
+    }
+
+    return connection
+  }
+
+  // If a transaction is provided, use it; otherwise create a new one
+  if (tx) {
+    return await performCreate(tx)
+  } else {
+    return await db.transaction(performCreate)
+  }
 }

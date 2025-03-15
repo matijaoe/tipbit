@@ -99,11 +99,11 @@ export default defineEventHandler(async (event) => {
             connectionId,
             {
               name: name || `Strike (${handle})`,
-              // TODO: pass the entire object if more fields will be available
             },
             {
               apiKey: decryptedClientApiKey,
-            }
+            },
+            tx
           )
         } else {
           // Different profile ID - delete the old connection
@@ -151,13 +151,19 @@ export default defineEventHandler(async (event) => {
             },
             {
               apiKey: decryptedClientApiKey,
-            }
+            },
+            tx
           )
         } else {
           // Create a new connection
-          return await createPaymentConnection(user.id, 'strike', strikeServiceData, {
-            name: name || `Strike (${handle})`,
-          })
+          return await createPaymentConnection(
+            user.id,
+            'strike',
+            strikeServiceData,
+            { name: name || `Strike (${handle})` },
+            // TODO: simplify this so we don't need to pass tx
+            tx
+          )
         }
       }
     })
