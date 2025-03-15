@@ -5,6 +5,7 @@ import { useToast } from '~/components/ui/toast'
 import { useStrikeConnection } from '~/composables/connections/strike'
 import type { StrikeConnectionRequestBody } from '~~/server/api/connections/strike/index.post'
 import { encryptForServer } from '~~/server/utils/encryption'
+
 const { toast } = useToast()
 
 const {
@@ -114,8 +115,7 @@ const createConnection = async (includeApiKey = false) => {
 
     // Add API key if provided and requested
     if (includeApiKey && apiKey.value) {
-      const encryptedApiKey = await encryptForServer(apiKey.value)
-      requestBody.apiKey = encryptedApiKey
+      requestBody.apiKey = await encryptForServer(apiKey.value)
     }
 
     // Call API with collected data

@@ -7,10 +7,10 @@
 ```mermaid
 graph TD
     A[User Input] --> B[Frontend Component]
-    B --> C{Encrypt with Public Key}
+    B --> C{Encrypt with Transit Public Key}
     C --> D[Encrypted API Key]
     D --> E[Send to Server]
-    E --> F{Server Decrypts with Private Key}
+    E --> F{Server Decrypts with Transit Private Key}
     F --> G[Decrypted API Key]
     G --> H{Encrypt with Storage Key}
     H --> I[Storage Encrypted Key]
@@ -26,12 +26,12 @@ graph TD
 
 1. **Frontend**:
    - User enters API key in the component
-   - Key is encrypted using `encryptForServer` with the public key
+   - Key is encrypted using `encryptForServer` with the transit public key
    - Encrypted key is sent to the server
 
 2. **Backend - Initial Processing**:
    - Server receives encrypted API key
-   - Decrypts using `decryptFromClient` with the private key
+   - Decrypts using `decryptFromClient` with the transit private key
    - Encrypts again using `encryptForStorage` with the storage key
    - Stores the doubly-encrypted key in the database
 
@@ -43,8 +43,8 @@ graph TD
 ### Encryption Functions Overview
 
 #### Client-Server Encryption (Asymmetric)
-- `encryptForServer(data: string)`: Encrypts data using public key
-- `decryptFromClient(encryptedData: string)`: Decrypts data using private key
+- `encryptForServer(data: string)`: Encrypts data using transit public key
+- `decryptFromClient(encryptedData: string)`: Decrypts data using transit private key
 
 #### Storage Encryption (Symmetric)
 - `encryptForStorage(data: string)`: Encrypts data using storage key
@@ -54,13 +54,43 @@ graph TD
 
 #### Required Environment Variables
 ```bash
-# Asymmetric Encryption (Client-Server)
-NUXT_ENCRYPTION_PUBLIC_KEY=base64-encoded-public-key
-NUXT_ENCRYPTION_PRIVATE_KEY=base64-encoded-private-key
+# Asymmetric Encryption (Client-Server transit)
+NUXT_PUBLIC_TRANSIT_PUBLIC_KEY=base64-encoded-public-key
+NUXT_TRANSIT_PRIVATE_KEY=base64-encoded-private-key
 
-# Symmetric Encryption (Server-Side)
+# Symmetric Encryption (Server-Side storage)
 NUXT_STORAGE_ENCRYPTION_KEY=base64-encoded-32-byte-key
+
+# Authentication
+NUXT_SESSION_PASSWORD=password-with-at-least-32-characters
 ```
+
+### Key Generation
+
+#### 1. Generate Transit Keys (Client-Server)
+```bash
+pnpm keygen:transit
+```
+
+This will generate:
+- `NUXT_PUBLIC_TRANSIT_PUBLIC_KEY`: Used by clients to encrypt data
+- `NUXT_TRANSIT_PRIVATE_KEY`: Used by server to decrypt data
+
+#### 2. Generate Storage Key (Server-Side)
+```bash
+pnpm keygen:storage
+```
+
+This will generate:
+- `NUXT_STORAGE_ENCRYPTION_KEY`: Used for encrypting data at rest
+
+#### 3. Generate Authentication Session Key
+```bash
+pnpm keygen:auth
+```
+
+This will generate:
+- `NUXT_SESSION_PASSWORD`: Used for secure session management
 
 ### Key Verification
 The system includes a `verifyStorageEncryptionKey` function that:
@@ -79,7 +109,7 @@ The system includes a `verifyStorageEncryptionKey` function that:
 2. **Key Rotation**:
    - Rotate `NUXT_STORAGE_ENCRYPTION_KEY` periodically
    - Re-encrypt stored data with new key
-   - Rotate asymmetric keys as needed
+   - Rotate transit keys as needed
 
 3. **Access Control**:
    - Limit access to key generation tools
@@ -95,49 +125,48 @@ The system includes a `verifyStorageEncryptionKey` function that:
 
 This application follows security best practices by implementing a dual-layer encryption system:
 
-1. **Asymmetric Encryption** (Client-Server):
-   - Uses `crypto_box_seal` algorithm
+1. **Asymmetric Encryption** (Client-Server Transit):
+   - Uses `crypto_box_seal` algorithm from libsodium
    - Public/Private key pair
    - Encrypts sensitive data before transmission from client to server
 
-2. **Symmetric Encryption** (Server-Side):
-   - Uses `crypto_secretbox` algorithm
+2. **Symmetric Encryption** (Server-Side Storage):
+   - Uses `crypto_secretbox` algorithm from libsodium
    - Single secret key
    - Encrypts data at rest in the database
-
-## Key Generation
-
-### 1. Generate Asymmetric Keys (Client-Server)
-```bash
-pnpm security:generate-asymmetric-keys
-```
-
-This will generate:
-- `NUXT_ENCRYPTION_PUBLIC_KEY`: Used by clients to encrypt data
-- `NUXT_ENCRYPTION_PRIVATE_KEY`: Used by server to decrypt data
-
-### 2. Generate Symmetric Key (Server-Side)
-```bash
-pnpm security:generate-symmetric-key
-```
-
-This will generate:
-- `NUXT_STORAGE_ENCRYPTION_KEY`: Used for encrypting data at rest
 
 ## Implementation Details
 
 The encryption system is implemented in `server/utils/encryption.ts` with the following key functions:
 
 ### Asymmetric Encryption (Client-Server)
-- `encryptForServer(data: string)`: Encrypts data using public key
-- `decryptFromClient(encryptedData: string)`: Decrypts data using private key
+- `encryptForServer(data: string)`: Encrypts data using transit public key
+- `decryptFromClient(encryptedData: string)`: Decrypts data using transit private key
 
 ### Symmetric Encryption (Server-Side)
-- `encryptForStorage(data: string)`: Encrypts data using secret key
+- `encryptForStorage(data: string)`: Encrypts data using storage encryption key
 - `decryptFromStorage(encryptedData: string)`: Decrypts data using same key
 
 ### Key Generation
-- `generateAsymmetricKeys()`: Creates public/private key pair
-- `generateSymmetricKey()`: Creates secret key for storage
+- `generatePrivatePublicKeyPair()`: Creates transit public/private key pair
+- `generateEncryptionKey()`: Creates secret key for storage or session
 
 These utilities are used throughout the application to ensure sensitive data is properly protected both in transit and at rest.
+
+## Runtime Configuration
+
+In `nuxt.config.ts`, the encryption keys are configured as follows:
+
+```typescript
+runtimeConfig: {
+  public: {
+    transitPublicKey: process.env.NUXT_PUBLIC_TRANSIT_PUBLIC_KEY,
+    // Other public config...
+  },
+  transitPrivateKey: process.env.NUXT_TRANSIT_PRIVATE_KEY,
+  storageEncryptionKey: process.env.NUXT_STORAGE_ENCRYPTION_KEY,
+  // Other private config...
+}
+```
+
+This ensures proper separation of public keys (available to the client) and private keys (only available on the server).

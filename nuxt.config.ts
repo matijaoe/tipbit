@@ -9,8 +9,8 @@ export default defineNuxtConfig({
     '@nuxt/fonts',
     '@nuxtjs/color-mode',
     '@pinia/nuxt',
+    '@nuxt/test-utils/module',
   ],
-
   colorMode: {
     classSuffix: '',
     preference: 'system',
@@ -56,16 +56,13 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     public: {
-      encryption: {
-        publicKey: process.env.NUXT_ENCRYPTION_PUBLIC_KEY,
-      },
-      strikeApiKey: process.env.STRIKE_API_KEY,
-      strikeApiUrl: process.env.STRIKE_API_URL,
+      transitPublicKey: process.env.NUXT_PUBLIC_TRANSIT_PUBLIC_KEY,
+      // TODO: move out of public?
+      strikeApiKey: process.env.NUXT_PUBLIC_STRIKE_API_KEY,
+      strikeApiUrl: process.env.NUXT_PUBLIC_STRIKE_API_URL,
     },
     dbFileName: process.env.DB_FILE_NAME,
-    encryption: {
-      privateKey: process.env.NUXT_ENCRYPTION_PRIVATE_KEY,
-    },
+    transitPrivateKey: process.env.NUXT_TRANSIT_PRIVATE_KEY,
     storageEncryptionKey: process.env.NUXT_STORAGE_ENCRYPTION_KEY,
   },
 })

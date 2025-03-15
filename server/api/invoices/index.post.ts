@@ -2,7 +2,7 @@ import type { H3Error } from 'h3'
 import { nanoid } from 'nanoid'
 import type { StrikeIssueInvoiceRequest } from '~~/lib/strike/api/types'
 import { createStrikeInvoiceForReceiver } from '~~/lib/strike/services/invoices'
-import type { Invoice, InvoiceRequestWithReceiver } from '~~/lib/unified'
+import type { Invoice, InvoiceRequestWithReceiver } from '~~/lib/general'
 
 export default defineEventHandler<{
   body: InvoiceRequestWithReceiver

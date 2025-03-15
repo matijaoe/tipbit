@@ -1,11 +1,10 @@
 import { pick } from 'es-toolkit'
-import type { Invoice, InvoiceStatus, ISO8601DateTime } from '../../unified'
+import type { Invoice, InvoiceStatus, ISO8601DateTime } from '../../general'
 import { createQuote, issueInvoice, issueInvoiceForReceiver } from '../api/api'
 import type { StrikeIssueInvoiceRequest } from '../api/types'
 
 export async function createStrikeInvoice(request: StrikeIssueInvoiceRequest): Promise<Invoice> {
   const invoice = await issueInvoice(request)
-  console.log('🔮', invoice)
   if (!invoice?.invoiceId) {
     throw createError({
       statusCode: 400,
@@ -54,7 +53,6 @@ export async function createStrikeInvoiceForReceiver(
   request: StrikeIssueInvoiceRequest
 ): Promise<Invoice> {
   const invoice = await issueInvoiceForReceiver(handle, request)
-  console.log('🔮', invoice)
   if (!invoice?.invoiceId) {
     throw createError({
       statusCode: 400,

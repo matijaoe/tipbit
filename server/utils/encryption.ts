@@ -1,10 +1,9 @@
-import { createError } from 'h3'
 import _sodium from 'libsodium-wrappers'
 
 let sodium: typeof _sodium | null = null
 
 // Initialize libsodium (called automatically on first use)
-const initialize = async () => {
+const initializeSodium = async () => {
   if (!sodium) {
     await _sodium.ready
     sodium = _sodium
@@ -12,258 +11,162 @@ const initialize = async () => {
 }
 
 /**
- * Generates a secure encryption key as a base64 string
- * Use this to generate a key for the NUXT_ENCRYPTION_KEY environment variable
+ * Generates a cryptographically secure encryption key encoded as base64.
+ *
+ * @remarks
+ * This function should be used to generate the NUXT_ENCRYPTION_KEY environment variable.
+ * The generated key meets the minimum security requirements for libsodium's secretbox encryption.
+ *
+ * @returns {Promise<string>} A base64-encoded encryption key
+ * @throws {Error} If libsodium initialization fails
+ *
+ * @example
+ * ```ts
+ * const key = await generateEncryptionKey()
+ * // => "h_QeVhXHrjhPiY29HkEehg2CxQUQY5YdICeqvXhV0P4="
+ * ```
  */
 export const generateEncryptionKey = async (): Promise<string> => {
-  await _sodium.ready
-  const keyBytes = _sodium.randombytes_buf(_sodium.crypto_secretbox_KEYBYTES)
-  return _sodium.to_base64(keyBytes)
-}
-
-/**
- * Verifies the encryption key is valid
- * This can be used to check if the application is configured correctly
- */
-export const verifyStorageEncryptionKey = async (): Promise<boolean> => {
-  try {
-    await _sodium.ready
-
-    const config = useRuntimeConfig()
-    const encryptionKey = config.encryptionKey
-
-    if (!encryptionKey) {
-      console.error('Encryption key is missing')
-      return false
-    }
-
-    if (encryptionKey.length < 32) {
-      console.error(`Encryption key is too short: ${encryptionKey.length} chars`)
-      return false
-    }
-
-    // Just test a basic encryption/decryption roundtrip
-    try {
-      const testString = 'test-encryption-key'
-      const encrypted = await encryptForStorage(testString)
-
-      if (!encrypted) {
-        console.error('Failed to encrypt test string')
-        return false
-      }
-
-      const decrypted = await decryptFromStorage(encrypted)
-
-      if (decrypted === testString) {
-        console.log('Encryption key validation successful')
-        return true
-      } else {
-        console.error('Encryption key validation failed: decrypted text does not match original')
-        return false
-      }
-    } catch (error) {
-      console.error('Failed to verify encryption key:', error)
-      return false
-    }
-  } catch (error) {
-    console.error('Error verifying encryption key:', error)
-    return false
-  }
-}
-
-/**
- * Encrypts sensitive data using libsodium secretbox
- * @param data The data to encrypt
- * @returns The encrypted data as a base64 string
- * @deprecated Use encryptForStorage instead
- */
-export const encrypt = async (data: string): Promise<string> => {
-  if (!data) return ''
-
-  try {
-    // Initialize libsodium
-    await _sodium.ready
-    console.log('Libsodium initialized successfully')
-
-    const config = useRuntimeConfig()
-    const encryptionKey = config.encryptionKey
-
-    // Debug logging (be careful not to log the entire key in production)
-    console.log(`Encryption key exists: ${!!encryptionKey}`)
-    console.log(`Encryption key length: ${encryptionKey?.length || 0}`)
-
-    if (!encryptionKey) {
-      console.error('Encryption key is missing')
-      throw createError({
-        statusCode: 500,
-        message: 'Encryption key is missing',
-      })
-    }
-
-    if (encryptionKey.length < 32) {
-      console.error(`Encryption key is too short: ${encryptionKey.length} chars`)
-      throw createError({
-        statusCode: 500,
-        message: 'Encryption key is invalid (too short)',
-      })
-    }
-
-    // Validate that the key is valid base64
-    try {
-      const keyBuffer = _sodium.from_base64(encryptionKey)
-      console.log(`Successfully decoded key to buffer of length: ${keyBuffer.length}`)
-    } catch (decodeError) {
-      console.error('Failed to decode base64 encryption key:', decodeError)
-      throw createError({
-        statusCode: 500,
-        message: 'Encryption key is not valid base64',
-      })
-    }
-
-    // Generate a random nonce
-    const nonce = _sodium.randombytes_buf(_sodium.crypto_secretbox_NONCEBYTES)
-    console.log(`Generated nonce of length: ${nonce.length}`)
-
-    // Convert key to Uint8Array
-    const keyBuffer = _sodium.from_base64(encryptionKey)
-
-    // Encrypt the data
-    const cipher = _sodium.crypto_secretbox_easy(_sodium.from_string(data), nonce, keyBuffer)
-    console.log(`Successfully encrypted data to cipher of length: ${cipher.length}`)
-
-    // Combine nonce and cipher for storage (nonce is needed for decryption)
-    const combined = new Uint8Array(nonce.length + cipher.length)
-    combined.set(nonce)
-    combined.set(cipher, nonce.length)
-
-    // Return as base64 string for storage
-    const result = _sodium.to_base64(combined)
-    console.log(`Successfully encoded result to base64 of length: ${result.length}`)
-    return result
-  } catch (error) {
-    console.error('Error encrypting data:', error)
-    throw createError({
-      statusCode: 500,
-      message: 'Failed to encrypt data',
-      cause: error,
-    })
-  }
-}
-
-/**
- * Decrypts data encrypted with the encrypt function
- * @param encryptedData The encrypted data as a base64 string
- * @returns The decrypted data
- * @deprecated Use decryptFromStorage instead
- */
-export const decrypt = async (encryptedData: string): Promise<string> => {
-  if (!encryptedData) return ''
-
-  try {
-    // Initialize libsodium
-    await _sodium.ready
-
-    const config = useRuntimeConfig()
-    const encryptionKey = config.encryptionKey
-
-    if (!encryptionKey || encryptionKey.length < 32) {
-      throw createError({
-        statusCode: 500,
-        message: 'Encryption key is missing or invalid',
-      })
-    }
-
-    // Convert encrypted data from base64
-    const combined = _sodium.from_base64(encryptedData)
-
-    // Extract nonce and cipher
-    const nonce = combined.slice(0, _sodium.crypto_secretbox_NONCEBYTES)
-    const cipher = combined.slice(_sodium.crypto_secretbox_NONCEBYTES)
-
-    // Convert key to Uint8Array
-    const keyBuffer = _sodium.from_base64(encryptionKey)
-
-    // Decrypt
-    const decrypted = _sodium.crypto_secretbox_open_easy(cipher, nonce, keyBuffer)
-
-    // Return decrypted string
-    return _sodium.to_string(decrypted)
-  } catch (error) {
-    console.error('Error decrypting data:', error)
-    throw createError({
-      statusCode: 500,
-      message: 'Failed to decrypt data',
-    })
-  }
-}
-
-/**
- * Asymmetric encryption for client-side data
- */
-export const encryptForServer = async (data: string): Promise<string> => {
-  await initialize()
+  await initializeSodium()
 
   if (!sodium) {
     throw new Error('Libsodium initialization failed')
   }
 
-  const config = useRuntimeConfig()
-  const publicKey = config.public.encryption.publicKey
+  const keyBytes = sodium.randombytes_buf(sodium.crypto_secretbox_KEYBYTES)
+  return sodium.to_base64(keyBytes)
+}
 
-  if (!publicKey) {
+export const generatePrivatePublicKeyPair = async (): Promise<{ privateKey: string; publicKey: string }> => {
+  await initializeSodium()
+
+  if (!sodium) {
+    throw new Error('Libsodium initialization failed')
+  }
+
+  const keyPair = sodium.crypto_box_keypair()
+  return {
+    privateKey: _sodium.to_base64(keyPair.privateKey),
+    publicKey: _sodium.to_base64(keyPair.publicKey),
+  }
+}
+
+/**
+ * Encrypts data using asymmetric encryption for client-to-server communication.
+ *
+ * @remarks
+ * Uses libsodium's crypto_box_seal for public key encryption. The server must have
+ * the corresponding private key to decrypt the data.
+ *
+ * @param {string} data - The plaintext data to encrypt
+ * @returns {Promise<string>} Base64-encoded encrypted data
+ * @throws {Error} If libsodium initialization fails
+ * @throws {Error} If public encryption key is missing from configuration
+ *
+ * @example
+ * ```ts
+ * const encrypted = await encryptForServer('sensitive data')
+ * // Send to server: await $fetch('/api/endpoint', { body: { data: encrypted } })
+ * ```
+ */
+export const encryptForServer = async (data: string): Promise<string> => {
+  await initializeSodium()
+
+  if (!sodium) {
+    throw new Error('Libsodium initialization failed')
+  }
+
+  const { transitEncryptionPublicKey } = useRuntimeConfig()
+
+  if (!transitEncryptionPublicKey) {
     throw new Error('Public encryption key is missing')
   }
 
-  const encrypted = sodium.crypto_box_seal(sodium.from_string(data), sodium.from_base64(publicKey))
+  const encrypted = sodium.crypto_box_seal(sodium.from_string(data), sodium.from_base64(transitEncryptionPublicKey))
 
   return sodium.to_base64(encrypted)
 }
 
 /**
- * Decrypts data encrypted with encryptForServer
+ * Decrypts data that was encrypted using encryptForServer.
+ *
+ * @remarks
+ * This function should only be used on the server side as it requires the private key.
+ * Uses libsodium's crypto_box_seal_open for decryption.
+ *
+ * @param {string} encryptedData - Base64-encoded encrypted data
+ * @returns {Promise<string>} Decrypted plaintext
+ * @throws {Error} If libsodium initialization fails
+ * @throws {Error} If private encryption key is missing from configuration
+ * @throws {Error} If decryption fails (invalid data or wrong key)
+ *
+ * @example
+ * ```ts
+ * try {
+ *   const decrypted = await decryptFromClient(encryptedData)
+ * } catch (error) {
+ *   console.error('Failed to decrypt client data:', error)
+ * }
+ * ```
  */
 export const decryptFromClient = async (encryptedData: string): Promise<string> => {
-  await initialize()
+  await initializeSodium()
 
   if (!sodium) {
     throw new Error('Libsodium initialization failed')
   }
 
-  const config = useRuntimeConfig()
-  const privateKey = config.encryption.privateKey
+  const { transitPrivateKey, transitPublicKey } = useRuntimeConfig()
 
-  if (!privateKey) {
+  if (!transitPrivateKey) {
     throw new Error('Private encryption key is missing')
   }
 
   const decrypted = sodium.crypto_box_seal_open(
     sodium.from_base64(encryptedData),
-    sodium.from_base64(config.public.encryption.publicKey),
-    sodium.from_base64(privateKey)
+    sodium.from_base64(transitPublicKey),
+    sodium.from_base64(transitPrivateKey)
   )
 
   return sodium.to_string(decrypted)
 }
 
 /**
- * Symmetric encryption for server-side storage
+ * Encrypts data for secure storage using symmetric encryption.
+ *
+ * @remarks
+ * Uses libsodium's secretbox encryption with a random nonce.
+ * The nonce is prepended to the encrypted data for storage.
+ * This is suitable for storing sensitive data in the database.
+ *
+ * @param {string} data - The plaintext data to encrypt
+ * @returns {Promise<string>} Base64-encoded encrypted data with nonce
+ * @throws {Error} If libsodium initialization fails
+ * @throws {Error} If storage encryption key is missing from configuration
+ *
+ * @example
+ * ```ts
+ * // Encrypt sensitive data before storing in database
+ * const apiKey = 'sk_live_...'
+ * const encrypted = await encryptForStorage(apiKey)
+ * await db.insert({ encryptedApiKey: encrypted })
+ * ```
  */
 export const encryptForStorage = async (data: string): Promise<string> => {
-  await initialize()
+  await initializeSodium()
 
   if (!sodium) {
     throw new Error('Libsodium initialization failed')
   }
 
-  const config = useRuntimeConfig()
-  const storageKey = config.storageEncryptionKey
+  const { storageEncryptionKey } = useRuntimeConfig()
 
-  if (!storageKey) {
+  if (!storageEncryptionKey) {
     throw new Error('Storage encryption key is missing')
   }
 
   const nonce = sodium.randombytes_buf(sodium.crypto_secretbox_NONCEBYTES)
-  const keyBuffer = sodium.from_base64(storageKey)
+  const keyBuffer = sodium.from_base64(storageEncryptionKey)
   const cipher = sodium.crypto_secretbox_easy(sodium.from_string(data), nonce, keyBuffer)
 
   // Combine nonce and cipher for storage
@@ -275,26 +178,47 @@ export const encryptForStorage = async (data: string): Promise<string> => {
 }
 
 /**
- * Decrypts data encrypted with encryptForStorage
+ * Decrypts data that was encrypted using encryptForStorage.
+ *
+ * @remarks
+ * Extracts the nonce from the combined data and uses it with the storage key
+ * to decrypt the data. The nonce is expected to be the first 24 bytes of
+ * the decoded data.
+ *
+ * @param {string} encryptedData - Base64-encoded encrypted data with prepended nonce
+ * @returns {Promise<string>} Decrypted plaintext
+ * @throws {Error} If libsodium initialization fails
+ * @throws {Error} If storage encryption key is missing from configuration
+ * @throws {Error} If decryption fails (invalid data, wrong key, or corrupted nonce)
+ *
+ * @example
+ * ```ts
+ * // Retrieve and decrypt sensitive data from database
+ * const { encryptedApiKey } = await db.select().from('credentials').first()
+ * try {
+ *   const apiKey = await decryptFromStorage(encryptedApiKey)
+ * } catch (error) {
+ *   console.error('Failed to decrypt stored data:', error)
+ * }
+ * ```
  */
 export const decryptFromStorage = async (encryptedData: string): Promise<string> => {
-  await initialize()
+  await initializeSodium()
 
   if (!sodium) {
     throw new Error('Libsodium initialization failed')
   }
 
-  const config = useRuntimeConfig()
-  const storageKey = config.storageEncryptionKey
+  const { storageEncryptionKey } = useRuntimeConfig()
 
-  if (!storageKey) {
+  if (!storageEncryptionKey) {
     throw new Error('Storage encryption key is missing')
   }
 
   const combined = sodium.from_base64(encryptedData)
   const nonce = combined.slice(0, sodium.crypto_secretbox_NONCEBYTES)
   const cipher = combined.slice(sodium.crypto_secretbox_NONCEBYTES)
-  const keyBuffer = sodium.from_base64(storageKey)
+  const keyBuffer = sodium.from_base64(storageEncryptionKey)
 
   const decrypted = sodium.crypto_secretbox_open_easy(cipher, nonce, keyBuffer)
   return sodium.to_string(decrypted)

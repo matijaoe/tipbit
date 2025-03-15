@@ -2,7 +2,7 @@
 import { useQRCode } from '@vueuse/integrations/useQRCode'
 import { cancelInvoice, getInvoices } from '~~/lib/strike/api/api'
 import type { StrikeAccountProfile, StrikeInvoice } from '~~/lib/strike/api/types'
-import type { Invoice, InvoiceRequestWithReceiver } from '~~/lib/unified'
+import type { Invoice, InvoiceRequestWithReceiver } from '~~/lib/general'
 import { useToast } from './ui/toast'
 
 const props = defineProps<{
