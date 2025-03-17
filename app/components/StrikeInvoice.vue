@@ -1,8 +1,8 @@
 <script lang="ts" setup>
 import { useQRCode } from '@vueuse/integrations/useQRCode'
-import { getInvoices } from '~~/lib/strike/api/api'
-import type { StrikeAccountProfile, StrikeInvoice } from '~~/lib/strike/api/types'
-import type { Invoice, InvoiceRequestWithReceiver } from '~~/lib/general'
+import type { Invoice, InvoiceRequestWithReceiver } from '~~/shared/payments/types'
+import { getInvoices } from '~~/shared/providers/strike/api'
+import type { StrikeAccountProfile, StrikeInvoice } from '~~/shared/providers/strike/types'
 import { useToast } from './ui/toast'
 
 const props = defineProps<{
@@ -99,12 +99,9 @@ const cancelPendingInvoice = async () => {
   }
 
   try {
-    // Use server API route instead of direct Strike API call
-    const canceledInvoice = await $fetch(`/api/invoices/${invoiceId.value}/cancel`, {
+    const canceledInvoice = await $fetch<StrikeInvoice>(`/api/invoices/${invoiceId.value}/cancel`, {
       method: 'POST',
     })
-
-    console.log('canceled invoice', canceledInvoice)
 
     if (canceledInvoice?.state === 'CANCELLED') {
       clearInvoice()

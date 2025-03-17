@@ -32,13 +32,12 @@ export const useStrikeConnection = () => {
   const profile = toRef(() => connection.value?.profile)
   const profileHandle = toRef(() => profile.value?.handle)
 
-  const connectAccount = async (body: StrikeConnectionRequestBody) => {
+  const connectAccount = (body: StrikeConnectionRequestBody) => {
     try {
-      const res = await $fetch('/api/connections/strike', {
+      return $fetch('/api/connections/strike', {
         method: 'POST',
         body,
       })
-      return res
     } catch (err) {
       console.error('Error connecting Strike account', err)
       throw err
@@ -59,8 +58,6 @@ export const useStrikeConnection = () => {
       const deletedConnection = await $fetch(`/api/connections/strike/${connId}`, {
         method: 'DELETE',
       })
-
-      console.log('🗑️ deletedConnection', deletedConnection)
 
       if (!deletedConnection) {
         console.warn('No connection was deleted')

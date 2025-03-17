@@ -11,11 +11,8 @@ alwaysApply: false
 - QR codes displayed via `@vueuse/integrations/useQRCode`
 
 ### Payment Connections
-- Lightning via Strike, Coinos, Alby APIs.
-  - https://docs.strike.me/api/
-  - https://coinos.io/docs
-  - https://guides.getalby.com/developer-guide/alby-wallet-api
-- Future on-chain addresses: static or dynamic (HD wallets).
+- Lightning via [Strike](mdc:https:/docs.strike.me/api), [Coinos](mdc:https:/coinos.io/docs), [Alby](mdc:https:/guides.getalby.com/developer-guide/alby-wallet-api) APIs.
+- Future on-chain addresses: static (single address) or dynamic (xpub).
 - Drag-and-drop sorting for payment priority using shadcn-vue components.
 
 ## Payment Handling

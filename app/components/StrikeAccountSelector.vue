@@ -3,7 +3,6 @@ import { ArrowLeft, ChevronRight, Edit, Eye, EyeOff, X as XIcon } from 'lucide-v
 import { useToast } from '~/components/ui/toast'
 import { useStrikeConnection } from '~/composables/connections/strike'
 import type { StrikeConnectionRequestBody } from '~~/server/api/connections/strike/index.post'
-import { encryptForServer } from '~~/server/utils/encryption'
 
 const { toast } = useToast()
 

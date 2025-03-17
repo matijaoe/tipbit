@@ -1,16 +1,15 @@
 import { and, eq, sql } from 'drizzle-orm'
-import { db } from '../database'
+import { isEmpty } from 'es-toolkit/compat'
+import type { PaymentServiceType } from '~~/shared/payments'
 import {
-  paymentConnections,
-  strikeConnections,
-  coinosConnections,
   albyConnections,
-  profiles,
+  coinosConnections,
+  paymentConnections,
   profilePaymentPreferences,
-  type PaymentServiceType,
+  profiles,
+  strikeConnections,
 } from '../database/schema'
 import { encryptForStorage } from './encryption'
-import { isEmpty } from 'es-toolkit/compat'
 
 // Service-specific data interfaces
 // TODO: Can we infer the type from the schema and pick specific types we need, or omit the ones we don't need?
@@ -34,6 +33,7 @@ export interface AlbyServiceData {
  * Get all enabled payment connections for a user with service details
  */
 export const getUserConnections = async (userId: string) => {
+  const db = useDB()
   const connections = await db.query.paymentConnections.findMany({
     where: (pc) => and(eq(pc.userId, userId), eq(pc.isEnabled, true)),
     with: {
@@ -53,6 +53,7 @@ export const getUserConnections = async (userId: string) => {
  * connectionIds should be an array of connection IDs in the desired order
  */
 export const updateConnectionPriorities = async (profileId: string, connectionIds: string[]) => {
+  const db = useDB()
   // Start a transaction to ensure all updates happen together
   return await db.transaction(async (tx) => {
     // Delete existing preferences for this profile
@@ -73,6 +74,7 @@ export const updateConnectionPriorities = async (profileId: string, connectionId
  * Get the highest priority enabled payment connection for a profile
  */
 export const getProfileActiveConnection = async (profileId: string) => {
+  const db = useDB()
   // First, get the profile's payment preferences in priority order
   const preferences = await db.query.profilePaymentPreferences.findMany({
     where: eq(profilePaymentPreferences.profileId, profileId),
@@ -142,6 +144,7 @@ export const getProfileActiveConnection = async (profileId: string) => {
  * Check if a user has any payment connections set up
  */
 export const hasPaymentConnections = async (userId: string) => {
+  const db = useDB()
   const count = await db
     .select({ count: sql<number>`count(*)` })
     .from(paymentConnections)
@@ -155,6 +158,7 @@ export const hasPaymentConnections = async (userId: string) => {
  * Get all profiles with their payment preferences
  */
 export const getProfilesWithPaymentPreferences = async (userId: string) => {
+  const db = useDB()
   return await db.query.profiles.findMany({
     where: eq(profiles.userId, userId),
     with: {
@@ -188,6 +192,7 @@ export const updatePaymentConnection = async (
   serviceData?: Partial<StrikeServiceData> | Partial<CoinosServiceData> | Partial<AlbyServiceData>,
   tx?: any // Transaction parameter
 ) => {
+  const db = useDB()
   // Function to perform the update
   const performUpdate = async (dbTx: any) => {
     // First, get the connection to check its type and verify it exists
@@ -295,6 +300,7 @@ export const createPaymentConnection = async (
   connectionData?: ConnectionData,
   tx?: any // Transaction parameter
 ) => {
+  const db = useDB()
   // Function to perform the creation
   const performCreate = async (dbTx: any) => {
     // Create the base payment connection

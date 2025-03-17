@@ -1,8 +1,7 @@
 import { eq } from 'drizzle-orm'
-import { db } from '~~/server/database'
-import { profilePaymentPreferences } from '~~/server/database/schema'
 import { z } from 'zod'
 import { createError, defineEventHandler, getValidatedRouterParams } from 'h3'
+import { profilePaymentPreferences } from '~~/server/database/schema'
 
 const paramsSchema = z.object({
   profileId: z.string().uuid(),
@@ -14,6 +13,8 @@ const paramsSchema = z.object({
  */
 export default defineEventHandler(async (event) => {
   const { profileId } = await getValidatedRouterParams(event, paramsSchema.parse)
+
+  const db = useDB()
 
   const profile = await db.query.profiles.findFirst({
     where: (p) => eq(p.id, profileId),

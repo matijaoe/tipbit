@@ -9,6 +9,12 @@ alwaysApply: false
 - Encrypt all API keys in DB using `libsodium`.
 - Store runtime encryption keys securely via Nuxt runtime config.
 
+### Authentication Protection
+- Protect logged-in user API routes using `requireUserSession(event)` to validate user authentication.
+```ts
+const { user } = await requireUserSession(event)
+```
+
 ### Rate Limiting
 - Invoice generation: Max 10 requests/min per IP.
 
@@ -18,12 +24,6 @@ alwaysApply: false
 ### Privacy Defaults
 - Anonymous tipping by default.
 - Explicit opt-in required to share tipper profile.
-
-### Authentication Protection
-- Protect logged-in user API routes using `requireUserSession(event)` to validate user authentication.
-```ts
-const { user } = await requireUserSession(event)
-```
 
 ### CSRF Protection
 - Protect state-changing endpoints with Nuxt middleware and CSRF tokens.

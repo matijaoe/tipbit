@@ -1,6 +1,5 @@
 import { updateConnectionPriorities } from '~~/server/utils'
 import { eq, and } from 'drizzle-orm'
-import { db } from '~~/server/database'
 import { z } from 'zod'
 import { createError, defineEventHandler, getValidatedRouterParams, readValidatedBody } from 'h3'
 
@@ -22,6 +21,8 @@ export default defineEventHandler(async (event) => {
 
     // Get and validate profile ID from route
     const { profileId } = await getValidatedRouterParams(event, paramsSchema.parse)
+
+    const db = useDB()
 
     // Verify profile belongs to user
     const profile = await db.query.profiles.findFirst({

@@ -1,13 +1,10 @@
 import { eq } from 'drizzle-orm'
 import type { H3Event } from 'h3'
-import { db } from '~~/server/database'
-import type { AuthProvider, IdentifierType } from '~~/server/database/schema'
 import { authConnections, profiles, users } from '~~/server/database/schema'
+import type { AuthProvider, IdentifierType } from '~~/shared/constants/auth'
+import type { DatabaseTransaction } from '../database'
 
 type OAuthProvider = AuthProvider
-
-// Infer the transaction type from the database
-type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0]
 
 export interface OAuthProviderData {
   id: string
@@ -21,14 +18,14 @@ export interface OAuthProviderData {
 }
 
 // Function to find user by email
-async function findUserByEmail(tx: Transaction, email: string) {
+async function findUserByEmail(tx: DatabaseTransaction, email: string) {
   return await tx.query.users.findFirst({
     where: (users) => eq(users.identifierType, 'email') && eq(users.identifier, email),
   })
 }
 
 // Function to find user by username
-async function findUserByUsername(tx: Transaction, username: string) {
+async function findUserByUsername(tx: DatabaseTransaction, username: string) {
   return await tx.query.users.findFirst({
     where: (users) => eq(users.identifierType, 'username') && eq(users.identifier, username),
   })
@@ -36,7 +33,7 @@ async function findUserByUsername(tx: Transaction, username: string) {
 
 export async function handleOAuthLogin(event: H3Event, providerData: OAuthProviderData) {
   providerData.identifier = providerData.identifier.toLowerCase()
-
+  const db = useDB()
   return await db.transaction(async (tx) => {
     // Check if account is already connected
     const connection = await tx.query.authConnections.findFirst({
@@ -138,7 +135,7 @@ export async function handleOAuthLogin(event: H3Event, providerData: OAuthProvid
 }
 
 // Function to create a unique handle
-async function createUniqueHandle(tx: Transaction, baseHandle: string): Promise<string> {
+async function createUniqueHandle(tx: DatabaseTransaction, baseHandle: string): Promise<string> {
   let handle = baseHandle
     .toLowerCase()
     .replace(/[^a-zA-Z0-9]/g, '')

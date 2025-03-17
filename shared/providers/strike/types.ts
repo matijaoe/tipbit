@@ -1,3 +1,7 @@
+/**
+ * Strike API type definitions
+ */
+
 export type StrikeCurrency = 'BTC' | 'USD' | 'EUR' | 'USDT' | 'GBP'
 
 export type StrikeInvoiceAmount = {

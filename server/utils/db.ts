@@ -1,11 +1,11 @@
-import { db, schema } from '../database'
+import { getInternalDB, schema } from '../database'
 
-export { sql, eq, and, or } from 'drizzle-orm'
+export { and, eq, or, sql } from 'drizzle-orm'
 
 export const tables = schema
 
 export const useDB = () => {
-  return db
+  return getInternalDB()
 }
 
 export type User = typeof tables.users.$inferSelect

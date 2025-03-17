@@ -1,8 +1,8 @@
 <script lang="ts" setup>
 import { useQRCode } from '@vueuse/integrations/useQRCode'
 import { useToast } from '~/components/ui/toast'
-import { createReceiveRequest } from '~~/lib/strike/api/api'
-import type { StrikeCreateReceiveRequest, StrikeDecimalAmount } from '~~/lib/strike/api/types'
+import { createReceiveRequest } from '~~/shared/providers'
+import type { StrikeCreateReceiveRequest, StrikeDecimalAmount } from '~~/shared/providers/strike/types'
 import { AnimatePresence, Motion } from 'motion-v'
 import StrikeAccountSelector from './StrikeAccountSelector.vue'
 

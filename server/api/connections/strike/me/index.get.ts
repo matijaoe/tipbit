@@ -1,7 +1,7 @@
 import { and, desc, eq } from 'drizzle-orm'
 import { omit } from 'es-toolkit'
 import { z } from 'zod'
-import { fetchProfileById } from '~~/lib/strike/api/api'
+import { fetchProfileById } from '~~/shared/providers'
 
 const querySchema = z.object({
   withProfile: z.union([
