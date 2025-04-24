@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { ChevronDown } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { createError } from '#imports'
-
+import type { ProviderType } from '~~/shared/types/providers'
 const handle = useRouteParams('handle')
 
 definePageMeta({
@@ -24,7 +24,7 @@ const { data: profileData } = await useFetch(() => `/api/profiles/${handle.value
 type ConnectionPreference = {
   id: string
   connection: {
-    serviceType: 'strike' | 'coinos' | 'alby'
+    serviceType: ProviderType
     name?: string
     strikeConnection?: {
       strikeProfileId: string
