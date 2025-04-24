@@ -114,6 +114,9 @@ importers:
       '@vueuse/router':
         specifier: ^13.1.0
         version: 13.1.0(vue-router@4.5.0(vue@3.5.13(typescript@5.8.3)))(vue@3.5.13(typescript@5.8.3))
+      drizzle-dbml-generator:
+        specifier: ^0.10.0
+        version: 0.10.0(drizzle-orm@0.42.0(@libsql/client@0.15.4)(gel@2.0.2))
       drizzle-kit:
         specifier: ^0.31.0
         version: 0.31.0
@@ -2749,6 +2752,11 @@ packages:
   dotenv@16.5.0:
     resolution: {integrity: sha512-m/C+AwOAr9/W1UOIZUo232ejMNnJAJtYQjUbHoNTBNTJSvqzzDh7vnrei3o3r3m9blf6ZoDkvcw0VmozNRFJxg==}
     engines: {node: '>=12'}
+
+  drizzle-dbml-generator@0.10.0:
+    resolution: {integrity: sha512-cMZq9E3U3RlmE0uBeXyc6oWJ0royOkC6HiTlc9LDeMe+W87poZTzKoNYUyAxZrs4Q1RQtob+cGKiefV4ZoI8HA==}
+    peerDependencies:
+      drizzle-orm: '>=0.36.0'
 
   drizzle-kit@0.31.0:
     resolution: {integrity: sha512-pcKVT+GbfPA+bUovPIilgVOoq+onNBo/YQBG86sf3/GFHkN6lRJPm1l7dKN0IMAk57RQoIm4GUllRrasLlcaSg==}
@@ -8421,6 +8429,10 @@ snapshots:
       type-fest: 4.39.1
 
   dotenv@16.5.0: {}
+
+  drizzle-dbml-generator@0.10.0(drizzle-orm@0.42.0(@libsql/client@0.15.4)(gel@2.0.2)):
+    dependencies:
+      drizzle-orm: 0.42.0(@libsql/client@0.15.4)(gel@2.0.2)
 
   drizzle-kit@0.31.0:
     dependencies:

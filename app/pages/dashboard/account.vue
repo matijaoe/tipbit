@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { ArrowUpRight } from 'lucide-vue-next'
-import type { AuthProvider } from '~~/shared/constants'
+import type { AuthProvider } from '~~/shared/constants/auth'
 
 definePageMeta({
   layout: 'dashboard',

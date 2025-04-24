@@ -7,7 +7,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { useRouteParams } from '@vueuse/router'
 import { ChevronDown } from 'lucide-vue-next'
 import { computed } from 'vue'
-import type { PaymentServiceType } from '~~/shared/payments'
+import type { PaymentServiceType } from '~~/shared/payments/constants'
 
 const handle = useRouteParams('handle')
 

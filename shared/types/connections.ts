@@ -1,4 +1,4 @@
-import type { PaymentServiceType } from '~~/shared/payments'
+import type { PaymentServiceType } from '~~/shared/payments/constants'
 
 /**
  * Service information for connections

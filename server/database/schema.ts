@@ -1,8 +1,8 @@
 import { randomUUID } from 'crypto'
 import { relations } from 'drizzle-orm'
 import { integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core'
-import { AuthProviders, IdentifierTypes, Roles } from '~~/shared/constants'
-import { PaymentServiceTypes } from '~~/shared/payments'
+import { AuthProviders, IdentifierTypes, Roles } from '../../shared/constants/auth'
+import { PaymentServiceTypes } from '../../shared/payments/constants'
 
 // Core user entity
 export const users = sqliteTable('users', {

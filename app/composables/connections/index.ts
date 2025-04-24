@@ -1,5 +1,5 @@
 import type { PaymentConnection } from '~~/server/utils/db'
-import type { PaymentServiceType } from '~~/shared/payments'
+import type { PaymentServiceType } from '~~/shared/payments/constants'
 import type { ConnectionStatus } from '~~/shared/types/connections'
 
 /**

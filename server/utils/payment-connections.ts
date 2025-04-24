@@ -1,6 +1,6 @@
 import { and, eq, sql } from 'drizzle-orm'
 import { isEmpty } from 'es-toolkit/compat'
-import type { PaymentServiceType } from '~~/shared/payments'
+import type { PaymentServiceType } from '~~/shared/payments/constants'
 import {
   albyConnections,
   coinosConnections,
