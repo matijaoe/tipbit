@@ -1,6 +1,5 @@
 <script lang="ts" setup>
 import { ChevronRight } from 'lucide-vue-next'
-import { useConnections } from '~/composables/connections/index'
 import { Badge } from '@/components/ui/badge'
 import { availableServices } from '~~/shared/data/services'
 import type { ProviderService } from '~~/shared/types/connections'
@@ -9,10 +8,8 @@ definePageMeta({
   layout: 'dashboard',
 })
 
-// Use the connections composable
 const { isServiceConnected, isLoading } = useConnections()
 
-// Filter services into connected and not connected categories
 const connectedServices = computed<ProviderService[]>(() =>
   availableServices.filter((service) => isServiceConnected(service.id))
 )
@@ -46,7 +43,9 @@ const notConnectedServices = computed<ProviderService[]>(() =>
               <div>
                 <div class="flex items-center gap-2">
                   <CardTitle>{{ service.name }}</CardTitle>
-                  <Badge size="sm" variant="outline" class="border-green-600 bg-green-500/20 text-green-100">connected</Badge>
+                  <Badge size="sm" variant="outline" class="border-green-600 bg-green-500/20 text-green-100"
+                    >connected</Badge
+                  >
                 </div>
                 <CardDescription class="mt-1">{{ service.description }}</CardDescription>
               </div>

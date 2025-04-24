@@ -28,6 +28,9 @@ export default defineNuxtConfig({
   vueuse: {
     autoImports: true,
   },
+  imports: {
+    dirs: ['composables/**', 'store/**', 'shared/utils/**'],
+  },
   components: {
     dirs: [
       {
