@@ -1,7 +1,7 @@
 /**
  * Strike payment adapter implementation
  */
-import { randomUUID } from 'crypto'
+import { randomUUID } from 'uncrypto'
 import type { PaymentAdapter } from '~~/shared/payments/adapters'
 import type { Invoice, InvoiceRequest, InvoiceRequestWithReceiver, ISO8601DateTime } from '~~/shared/payments/types'
 import { createQuote, issueInvoice, issueInvoiceForReceiver, getInvoice, cancelInvoice } from './api'

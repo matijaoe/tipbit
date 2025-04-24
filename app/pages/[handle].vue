@@ -1,9 +1,5 @@
 <script lang="ts" setup>
 import { createError } from '#imports'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { useRouteParams } from '@vueuse/router'
 import { ChevronDown } from 'lucide-vue-next'
 import { computed } from 'vue'

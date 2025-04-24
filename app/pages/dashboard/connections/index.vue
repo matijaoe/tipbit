@@ -1,6 +1,5 @@
 <script lang="ts" setup>
 import { ChevronRight } from 'lucide-vue-next'
-import { Badge } from '@/components/ui/badge'
 import { availableServices } from '~~/shared/data/services'
 import type { ProviderService } from '~~/shared/types/connections'
 

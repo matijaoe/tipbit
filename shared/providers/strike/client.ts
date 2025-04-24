@@ -27,6 +27,7 @@ export const strikeApiClient = {
     if (!this._globalClient) {
       const config = useRuntimeConfig()
 
+      // TODO: doesn't seem to work anymore
       if (!config.strikeApiKey) {
         throw createError({
           statusCode: 500,
