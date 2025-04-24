@@ -1,13 +1,14 @@
 <script lang="ts" setup>
+import { createError } from '#imports'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Card, CardContent } from '@/components/ui/card'
-import { useRouteParams } from '@vueuse/router'
-import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import { useRouteParams } from '@vueuse/router'
 import { ChevronDown } from 'lucide-vue-next'
 import { computed } from 'vue'
-import { createError } from '#imports'
-import type { ProviderType } from '~~/shared/types/providers'
+import type { PaymentServiceType } from '~~/shared/payments'
+
 const handle = useRouteParams('handle')
 
 definePageMeta({
@@ -24,7 +25,7 @@ const { data: profileData } = await useFetch(() => `/api/profiles/${handle.value
 type ConnectionPreference = {
   id: string
   connection: {
-    serviceType: ProviderType
+    serviceType: PaymentServiceType
     name?: string
     strikeConnection?: {
       strikeProfileId: string

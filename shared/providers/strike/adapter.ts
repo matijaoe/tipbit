@@ -2,8 +2,8 @@
  * Strike payment adapter implementation
  */
 import { randomUUID } from 'crypto'
-import type { PaymentAdapter } from '../../payments/adapters'
-import type { Invoice, InvoiceRequest, InvoiceRequestWithReceiver, ISO8601DateTime } from '../../payments/types'
+import type { PaymentAdapter } from '~~/shared/payments/adapters'
+import type { Invoice, InvoiceRequest, InvoiceRequestWithReceiver, ISO8601DateTime } from '~~/shared/payments/types'
 import { createQuote, issueInvoice, issueInvoiceForReceiver, getInvoice, cancelInvoice } from './api'
 import type { StrikeInvoiceState, StrikeIssueInvoiceRequest } from './types'
 
@@ -164,6 +164,7 @@ export class StrikeAdapter implements PaymentAdapter {
    * Cancel an invoice
    */
   async cancelInvoice(invoiceId: string): Promise<boolean> {
-    return await cancelInvoice(invoiceId)
+    const result = await cancelInvoice(invoiceId)
+    return Boolean(result.created)
   }
 }

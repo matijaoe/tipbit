@@ -45,12 +45,11 @@ export const useStrikeConnection = () => {
     }
 
     try {
-      const connId = connectionId.value
-      if (!connId) {
+      if (!connectionId.value) {
         throw new Error('No connection ID found')
       }
 
-      const deletedConnection = await $fetch(`/api/connections/strike/${connId}`, {
+      const deletedConnection = await $fetch(`/api/connections/strike/${connectionId.value}`, {
         method: 'DELETE',
       })
 
