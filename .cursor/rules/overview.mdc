@@ -26,4 +26,5 @@ Tipbit is a simple, privacy-focused Bitcoin tipping platform leveraging the Ligh
 
 ## Import aliases
 - `~~/...` - import from root
-- `~/..` - import from app
+- `~~/server/` - import from server
+- `~/..` - import from app (frontend)

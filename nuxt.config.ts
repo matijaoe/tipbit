@@ -10,6 +10,7 @@ export default defineNuxtConfig({
     '@nuxtjs/color-mode',
     '@pinia/nuxt',
     '@nuxt/test-utils/module',
+    'shadcn-nuxt',
   ],
   colorMode: {
     classSuffix: '',
@@ -28,16 +29,12 @@ export default defineNuxtConfig({
   vueuse: {
     autoImports: true,
   },
-  components: {
-    dirs: [
-      {
-        path: '~/components/ui',
-        enabled: true,
-        prefix: '',
-        extensions: ['.vue'],
-      },
-      '~/components',
-    ],
+  imports: {
+    dirs: ['composables/**', 'stores/**', 'shared/utils/**'],
+  },
+  shadcn: {
+    prefix: '',
+    componentDir: './app/components/ui',
   },
   pinia: {
     storesDirs: ['~/stores/**'],

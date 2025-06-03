@@ -1,6 +1,6 @@
-import type { StrikeAccountProfile } from '~~/lib/strike/api/types'
 import type { StrikeConnectionRequestBody } from '~~/server/api/connections/strike/index.post'
 import type { PaymentConnection, StrikeConnection } from '~~/server/utils/db'
+import type { StrikeAccountProfile } from '~~/shared/providers/strike/types'
 
 type ConnectionWithStrikeConnectionAndProfile = PaymentConnection & {
   strikeConnection: Omit<StrikeConnection, 'apiKey'> & {
@@ -27,57 +27,40 @@ export const useStrikeConnection = () => {
 
   const isConnected = computed(() => !!connection.value)
   const isConnectionLoading = computed(() => connectionStatus.value === 'pending')
-  const connectionId = computed(() => connection.value?.id)
+  const connectionId = toRef(() => connection.value?.id)
 
   const profile = toRef(() => connection.value?.profile)
   const profileHandle = toRef(() => profile.value?.handle)
 
-  const connectAccount = async (body: StrikeConnectionRequestBody) => {
-    try {
-      const res = await $fetch('/api/connections/strike', {
-        method: 'POST',
-        body,
-      })
-      return res
-    } catch (err) {
-      console.error('Error connecting Strike account', err)
-      throw err
-    }
+  const connectAccount = (body: StrikeConnectionRequestBody) => {
+    return $fetch('/api/connections/strike', {
+      method: 'POST',
+      body,
+    })
   }
 
   const disconnectAccount = async () => {
     if (!isConnected.value) {
-      return
+      return false
     }
 
     try {
-      const connId = connectionId.value
-      if (!connId) {
+      if (!connectionId.value) {
         throw new Error('No connection ID found')
       }
 
-      const deletedConnection = await $fetch(`/api/connections/strike/${connId}`, {
+      const deletedConnection = await $fetch(`/api/connections/strike/${connectionId.value}`, {
         method: 'DELETE',
       })
-
-      console.log('🗑️ deletedConnection', deletedConnection)
 
       if (!deletedConnection) {
         console.warn('No connection was deleted')
       }
-
-      // Clear the connection data regardless of API result
-      clearUserConnection()
-      return true
     } catch (error) {
       console.error('Error disconnecting Strike account:', error)
-
-      // Still clear the connection from local state
+      throw error
+    } finally {
       clearUserConnection()
-
-      // Only re-throw if we want to show an error to the user
-      // throw error
-      return true
     }
   }
 

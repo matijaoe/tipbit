@@ -1,0 +1,100 @@
+table alby_connections {
+  id text [pk, not null]
+  connection_id text [not null, unique]
+  alby_id text [not null]
+  access_token text [not null]
+  refresh_token text
+  created_at integer [not null]
+  updated_at integer
+}
+
+table auth_connections {
+  id text [pk, not null]
+  user_id text [not null]
+  provider text [not null]
+  provider_user_id text [not null]
+  created_at integer [not null]
+
+  indexes {
+    (provider, provider_user_id) [name: 'provider_user_idx', unique]
+  }
+}
+
+table coinos_connections {
+  id text [pk, not null]
+  connection_id text [not null, unique]
+  coinos_username text [not null]
+  api_key text [not null]
+  created_at integer [not null]
+  updated_at integer
+}
+
+table payment_connections {
+  id text [pk, not null]
+  user_id text [not null]
+  service_type text [not null]
+  name text
+  is_enabled integer [default: true]
+  created_at integer [not null]
+  updated_at integer
+}
+
+table profile_payment_preferences {
+  id text [pk, not null]
+  profile_id text [not null]
+  connection_id text [not null]
+  priority integer [not null]
+  created_at integer [not null]
+  updated_at integer
+
+  indexes {
+    (profile_id, connection_id) [name: 'profile_connection_idx', unique]
+  }
+}
+
+table profiles {
+  id text [pk, not null]
+  user_id text [not null]
+  handle text [not null, unique]
+  display_name text [not null]
+  avatar_url text
+  is_public integer [default: true]
+  is_default integer [default: false]
+  created_at integer [not null]
+  updated_at integer
+}
+
+table strike_connections {
+  id text [pk, not null]
+  connection_id text [not null, unique]
+  strike_profile_id text [not null]
+  api_key text
+  created_at integer [not null]
+  updated_at integer
+}
+
+table users {
+  id text [pk, not null]
+  identifier_type text [not null]
+  identifier text [not null, unique]
+  avatar_url text
+  role text [not null, default: 'USER']
+  created_at integer [not null]
+  updated_at integer
+}
+
+ref: payment_connections.id - alby_connections.connection_id
+
+ref: auth_connections.user_id > users.id
+
+ref: payment_connections.id - coinos_connections.connection_id
+
+ref: payment_connections.user_id > users.id
+
+ref: strike_connections.connection_id - payment_connections.id
+
+ref: profile_payment_preferences.profile_id > profiles.id
+
+ref: profile_payment_preferences.connection_id > payment_connections.id
+
+ref: profiles.user_id > users.id

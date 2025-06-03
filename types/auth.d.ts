@@ -1,4 +1,4 @@
-import type { Role } from '~~/server/database/schema'
+import type { Role } from '~~/lib/general/constants'
 
 // auth.d.ts
 declare module '#auth-utils' {

@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { ArrowUpRight } from 'lucide-vue-next'
-import type { AuthProvider } from '~~/server/database/schema'
+import type { AuthProvider } from '~~/shared/constants/auth'
 
 definePageMeta({
   layout: 'dashboard',
@@ -72,7 +72,7 @@ function getProviderName(provider: AuthProvider) {
             </div>
           </div>
         </div>
-      </CardContent>
+      </CardContent>  
     </Card>
 
     <!-- Profiles Section -->

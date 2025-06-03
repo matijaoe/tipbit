@@ -1,7 +1,7 @@
 ---
-description: Base Guidelines for Sonnet-3.7 + Cursor Agent
-globs: '*,**/*'
-alwaysApply: false
+description: 
+globs: 
+alwaysApply: true
 ---
 # Guidelines for Using Claude 3.7 Sonnet in Cursor
 

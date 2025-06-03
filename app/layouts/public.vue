@@ -1,6 +1,4 @@
 <script lang="ts" setup>
-import { Button } from '@/components/ui/button'
-
 const { user } = useUserSession()
 
 // TODO: check if own profile

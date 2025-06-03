@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import type { AuthProvider } from '~~/server/database/schema'
+import type { AuthProvider } from '~~/shared/constants/auth'
 
 const { ready } = useUserSession()
 

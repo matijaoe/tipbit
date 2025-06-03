@@ -1,13 +1,10 @@
 import { and, eq } from 'drizzle-orm'
-import { createError, defineEventHandler, readValidatedBody, H3Error } from 'h3'
+import { createError, defineEventHandler, H3Error, readValidatedBody } from 'h3'
 import { z } from 'zod'
-import { fetchProfileByHandle } from '~~/lib/strike/api/api'
-import { createPaymentConnection, updatePaymentConnection } from '~~/server/utils'
-import { decryptFromClient, encryptForStorage } from '~~/server/utils/encryption'
+import { paymentConnections, strikeConnections } from '~~/server/database/schema'
 import type { StrikeServiceData } from '~~/server/utils/payment-connections'
 import { strikeHandleSchema } from '~~/server/utils/schemas'
-import { db } from '~~/server/database'
-import { paymentConnections, strikeConnections } from '~~/server/database/schema'
+import { fetchProfileByHandle } from '~~/shared/providers'
 
 const strikeConnectionSchema = z.object({
   handle: strikeHandleSchema,
@@ -70,6 +67,8 @@ export default defineEventHandler(async (event) => {
     }
 
     // TODO: this should be greatly simplified
+
+    const db = useDB()
 
     // Transaction to handle connection updates or creation in a single DB operation
     const connection = await db.transaction(async (tx) => {

@@ -7,5 +7,6 @@
     "NONCEBYTES",
     "secretbox",
     "tipbit"
-  ]
+  ],
+  "typescript.tsdk": "node_modules/typescript/lib"
 }

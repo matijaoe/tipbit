@@ -1,9 +1,9 @@
 import { isNotNil, isObject } from 'es-toolkit/compat'
 import { defineEventHandler, readValidatedBody } from 'h3'
 import { z } from 'zod'
-import { PaymentServiceTypes, type PaymentServiceType } from '~~/server/database/schema'
 import type { AlbyServiceData, CoinosServiceData, StrikeServiceData } from '~~/server/utils'
 import { createPaymentConnection } from '~~/server/utils'
+import { PaymentServiceTypes, type PaymentServiceType } from '~~/shared/payments/constants'
 
 const bodySchema = z.object({
   serviceType: z.enum(PaymentServiceTypes),

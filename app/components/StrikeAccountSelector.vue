@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ArrowLeft, ChevronRight, Edit, Eye, EyeOff, X as XIcon } from 'lucide-vue-next'
 import { useToast } from '~/components/ui/toast'
-import { useStrikeConnection } from '~/composables/connections/strike'
 import type { StrikeConnectionRequestBody } from '~~/server/api/connections/strike/index.post'
 import { encryptForServer } from '~~/server/utils/encryption'
 
@@ -127,6 +126,8 @@ const createConnection = async (includeApiKey = false) => {
     if (!response) {
       throw new Error('Failed to connect Strike account')
     }
+
+    // TODO: handle invalid ky
 
     // Show success toast
     toast({

@@ -12,7 +12,7 @@ useSeoMeta({
       <NuxtPage />
     </NuxtLayout>
 
-    <ToastToaster />
+    <Toaster />
   </Body>
 </template>
 

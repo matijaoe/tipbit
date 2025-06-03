@@ -1,13 +1,9 @@
 import { defineNuxtRouteMiddleware } from '#app'
 import type { RouteLocation } from 'vue-router'
+import { isAuthRoute, isPublicRoute } from '~~/shared'
 
 const isDashboardRoute = (to: RouteLocation) => {
   return to.name === 'dashboard' || to.name?.toString().startsWith('dashboard-')
-}
-
-const isAuthRoute = (to: RouteLocation) => {
-  const authRoutes = ['login', 'register']
-  return authRoutes.includes(to.name as string)
 }
 
 export default defineNuxtRouteMiddleware(async (to) => {
@@ -28,7 +24,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
     return
   }
 
-  if (isAuthRoute(to)) {
+  if (isAuthRoute(to.name)) {
     if (loggedIn.value) {
       return navigateTo('/')
     }

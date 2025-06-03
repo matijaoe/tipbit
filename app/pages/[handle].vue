@@ -1,12 +1,9 @@
 <script lang="ts" setup>
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Card, CardContent } from '@/components/ui/card'
+import { createError } from '#imports'
 import { useRouteParams } from '@vueuse/router'
-import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible'
-import { Button } from '@/components/ui/button'
 import { ChevronDown } from 'lucide-vue-next'
 import { computed } from 'vue'
-import { createError } from '#imports'
+import type { PaymentServiceType } from '~~/shared/payments/constants'
 
 const handle = useRouteParams('handle')
 
@@ -24,7 +21,7 @@ const { data: profileData } = await useFetch(() => `/api/profiles/${handle.value
 type ConnectionPreference = {
   id: string
   connection: {
-    serviceType: 'strike' | 'coinos' | 'alby'
+    serviceType: PaymentServiceType
     name?: string
     strikeConnection?: {
       strikeProfileId: string

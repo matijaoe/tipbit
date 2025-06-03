@@ -1,7 +1,5 @@
-import { nanoid } from 'nanoid'
-import type { Invoice, InvoiceRequestWithReceiver } from '~~/lib/general'
-import type { StrikeIssueInvoiceRequest } from '~~/lib/strike/api/types'
-import { createStrikeInvoiceForReceiver } from '~~/lib/strike/services/invoices'
+import type { Invoice, InvoiceRequestWithReceiver } from '~~/shared/payments/types'
+import { StrikeAdapter } from '~~/shared/providers/strike/adapter'
 
 export default defineEventHandler<{
   body: InvoiceRequestWithReceiver
@@ -9,17 +7,13 @@ export default defineEventHandler<{
 }>(async (event) => {
   await requireUserSession(event)
 
+  // TODO: validate body
   const body = await readBody(event)
 
   switch (body.service) {
     case 'strike': {
-      const strikeRequest: StrikeIssueInvoiceRequest = {
-        ...body,
-        correlationId: `tipbit_${nanoid()}`,
-        description: body.description || '',
-      }
-      const response = await createStrikeInvoiceForReceiver(body.receiver, strikeRequest)
-      return response
+      const strikeAdapter = new StrikeAdapter()
+      return await strikeAdapter.createInvoice(body)
     }
     default:
       throw createError({

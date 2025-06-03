@@ -1,20 +1,8 @@
-import { randomUUID } from 'crypto'
+import { randomUUID } from 'uncrypto'
 import { relations } from 'drizzle-orm'
 import { integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core'
-
-// TODO: move to constants or type
-const Roles = ['USER', 'ADMIN'] as const
-export type Role = (typeof Roles)[number]
-
-const AuthProviders = ['github', 'google', 'x', 'twitch'] as const
-export type AuthProvider = (typeof AuthProviders)[number]
-
-const IdentifierTypes = ['email', 'username'] as const
-export type IdentifierType = (typeof IdentifierTypes)[number]
-
-// Payment service types
-export const PaymentServiceTypes = ['strike', 'coinos', 'alby'] as const
-export type PaymentServiceType = (typeof PaymentServiceTypes)[number]
+import { AuthProviders, IdentifierTypes, Roles } from '../../shared/constants/auth'
+import { PaymentServiceTypes } from '../../shared/payments/constants'
 
 // Core user entity
 export const users = sqliteTable('users', {
