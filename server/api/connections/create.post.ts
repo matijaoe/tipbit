@@ -1,4 +1,4 @@
-import { isNotNil, isObject } from 'es-toolkit/compat'
+import { isObject } from 'es-toolkit/compat'
 import { defineEventHandler, readValidatedBody } from 'h3'
 import { z } from 'zod'
 import type { AlbyServiceData, CoinosServiceData, StrikeServiceData } from '~~/server/utils'
@@ -8,7 +8,7 @@ import { PaymentServiceTypes, type PaymentServiceType } from '~~/shared/payments
 const bodySchema = z.object({
   serviceType: z.enum(PaymentServiceTypes),
   name: z.string().optional(),
-  serviceData: z.record(z.unknown()).refine((val) => isNotNil(val) && isObject(val), {
+  serviceData: z.record(z.unknown()).refine((val) => val != null && isObject(val), {
     message: 'serviceData must be an object',
   }),
 })
