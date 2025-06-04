@@ -34,11 +34,11 @@ const invoiceItems: MenuItem[] = [
     url: '/dashboard/invoice',
     icon: FileText,
   },
-  // {
-  //   title: 'Receive Requests',
-  //   url: '/dashboard/receive-request',
-  //   icon: Inbox,
-  // },
+  {
+    title: 'Receive Requests',
+    url: '/dashboard/receive-request',
+    icon: Inbox,
+  },
 ]
 
 const adminItems: MenuItem[] = [

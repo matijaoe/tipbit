@@ -91,8 +91,9 @@ export const fetchProfileById = async (id: string, options?: StrikeApiOptions) =
 }
 
 export const createReceiveRequest = async (body: StrikeCreateReceiveRequest, options?: StrikeApiOptions) => {
+  console.log('🔑 createReceiveRequest with', options?.encryptedUserKey ? 'encrypted' : 'global', 'key')
   const api = await useStrikeApi(options)
-  const receiveRequest = await api<StrikeReceiveRequest>('/receive', {
+  const receiveRequest = await api<StrikeReceiveRequest>('/receive-requests', {
     method: 'POST',
     body,
   })

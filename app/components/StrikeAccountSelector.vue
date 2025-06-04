@@ -180,6 +180,7 @@ defineExpose({
   connection,
   clearConnection,
   isEditMode,
+  toggleEditMode: toggleEditModeHandler,
 })
 </script>
 

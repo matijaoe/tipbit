@@ -1,13 +1,14 @@
 <script lang="ts" setup>
 import { useQRCode } from '@vueuse/integrations/useQRCode'
 import { useToast } from '~/components/ui/toast'
-import { createReceiveRequest } from '~~/shared/providers'
 import type { StrikeCreateReceiveRequest, StrikeDecimalAmount } from '~~/shared/providers/strike/types'
 import { AnimatePresence, Motion } from 'motion-v'
 import StrikeAccountSelector from './StrikeAccountSelector.vue'
 
 const accountSelector = useTemplateRef('account-selector')
 const handle = toRef(() => accountSelector.value?.connection?.profile?.handle)
+const connectionId = toRef(() => accountSelector.value?.connection?.id)
+const hasApiKey = toRef(() => accountSelector.value?.connection?.strikeConnection?.hasApiKey)
 
 // State for the amount
 const satsAmount = ref<number>()
@@ -40,6 +41,11 @@ const clearReceiveRequest = () => {
 
 // Create request with amount
 const createRequest = async () => {
+  if (!connectionId.value) {
+    toast({ title: 'No Strike connection found', variant: 'destructive' })
+    return
+  }
+
   setIsRequestPending(true)
   const sats = satsAmount.value
   if (!sats) {
@@ -48,13 +54,17 @@ const createRequest = async () => {
     return
   }
   const amount: StrikeDecimalAmount = { amount: satsToBtc(sats).toString(), currency: 'BTC' }
-  const body: StrikeCreateReceiveRequest = {
+  const body: StrikeCreateReceiveRequest & { connectionId: string } = {
+    connectionId: connectionId.value,
     bolt11: { amount },
     onchain: { amount },
   }
 
   try {
-    const receiveRequest = await createReceiveRequest(body)
+    const receiveRequest = await $fetch('/api/receive-requests', {
+      method: 'POST',
+      body,
+    })
     if (!receiveRequest?.receiveRequestId) throw new Error('Failed to create receive request')
     receiveRequestId.value = receiveRequest.receiveRequestId
     lnInvoice.value = receiveRequest.bolt11?.invoice || ''
@@ -71,15 +81,24 @@ const createRequest = async () => {
 
 // Create amountless request
 const createAmountlessRequest = async () => {
+  if (!connectionId.value) {
+    toast({ title: 'No Strike connection found', variant: 'destructive' })
+    return
+  }
+
   satsAmount.value = 0
   setIsRequestPending(true)
-  const body: StrikeCreateReceiveRequest = {
+  const body: StrikeCreateReceiveRequest & { connectionId: string } = {
+    connectionId: connectionId.value,
     bolt11: {},
     onchain: {},
   }
 
   try {
-    const receiveRequest = await createReceiveRequest(body)
+    const receiveRequest = await $fetch('/api/receive-requests', {
+      method: 'POST',
+      body,
+    })
     if (!receiveRequest?.receiveRequestId) throw new Error('Failed to create receive request')
     receiveRequestId.value = receiveRequest.receiveRequestId
     lnInvoice.value = receiveRequest.bolt11?.invoice || ''
@@ -122,7 +141,22 @@ watchEffect(() => {
     <StrikeAccountSelector ref="account-selector" @clear-account="clearAccount" />
 
     <div v-if="handle" class="mt-4 space-y-4">
-      <Card v-if="!lnInvoice && !onchainAddress">
+      <!-- API Key Required Warning -->
+      <Card v-if="!hasApiKey" class="border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-950">
+        <CardHeader>
+          <CardTitle class="text-yellow-800 dark:text-yellow-200">API Key Required</CardTitle>
+          <CardDescription class="text-yellow-700 dark:text-yellow-300">
+            To create receive requests that generate Lightning and on-chain Bitcoin invoices, you need to provide your Strike API key.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button variant="outline" @click="accountSelector?.toggleEditMode?.()">
+            Add API Key
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card v-if="!lnInvoice && !onchainAddress && hasApiKey">
         <CardHeader>
           <CardTitle>Create Payment Request</CardTitle>
           <CardDescription>Generate a Lightning or On-chain payment request</CardDescription>
