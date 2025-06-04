@@ -109,6 +109,12 @@ const clearAccount = () => {
   accountSelector.value?.clearConnection()
   clearReceiveRequest()
 }
+
+const { user } = useCurrentUser()
+
+watchEffect(() => {
+  console.log('user :', user.value)
+})
 </script>
 
 <template>

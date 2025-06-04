@@ -39,7 +39,6 @@ export const profiles = sqliteTable('profiles', {
   updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
 })
 
-// OAuth connections
 export const authConnections = sqliteTable(
   'auth_connections',
   {

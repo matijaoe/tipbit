@@ -18,13 +18,10 @@ const bodySchema = z.object({
  * @route POST /api/connections/create
  */
 export default defineEventHandler(async (event) => {
-  // Ensure user is authenticated
   const { user } = await requireUserSession(event)
 
-  // Get and validate data from request body
   const { serviceType, name, serviceData } = await readValidatedBody(event, bodySchema.parse)
 
-  // Create the connection
   const connection = await createPaymentConnection(
     user.id,
     serviceType as PaymentServiceType,

@@ -62,7 +62,6 @@ export async function handleOAuthLogin(event: H3Event, providerData: OAuthProvid
         // Link this provider to existing account
         userId = existingUser.id
 
-        // Create auth connection
         await tx.insert(authConnections).values({
           userId,
           provider: providerData.provider,
@@ -100,7 +99,6 @@ export async function handleOAuthLogin(event: H3Event, providerData: OAuthProvid
           avatarUrl: providerData.avatarUrl,
         })
 
-        // Create auth connection
         await tx.insert(authConnections).values({
           userId,
           provider: providerData.provider,

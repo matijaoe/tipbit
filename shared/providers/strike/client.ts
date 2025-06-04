@@ -1,4 +1,5 @@
 // Create a reusable factory for Strike API clients
+// TODO: move to server, use non-public config
 export const strikeApiClient = {
   // Cached global client instance
   _globalClient: null as ReturnType<typeof $fetch.create> | null,

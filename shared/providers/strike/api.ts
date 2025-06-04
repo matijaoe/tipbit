@@ -19,7 +19,6 @@ export type StrikeApiOptions = {
 
 // Get or create the appropriate API client based on options
 export const useStrikeApi = async (options?: StrikeApiOptions) => {
-  console.log('options?.encryptedUserKey :', options?.encryptedUserKey)
   if (options?.encryptedUserKey) {
     return await strikeApiClient.withUserKey(options.encryptedUserKey)
   }

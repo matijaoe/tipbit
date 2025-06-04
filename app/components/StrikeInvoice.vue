@@ -73,8 +73,6 @@ const tip = async () => {
       } satisfies InvoiceRequestWithReceiver,
     })
 
-    console.log(invoice)
-
     invoiceId.value = invoice.invoiceId
     lnInvoice.value = invoice.lnInvoice
   } catch (error: unknown) {
