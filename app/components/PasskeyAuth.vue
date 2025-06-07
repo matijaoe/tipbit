@@ -11,6 +11,7 @@ const error = ref<string | null>(null)
 const { register, authenticate } = useWebAuthn({
   registerEndpoint: '/api/auth/webauthn/register',
   authenticateEndpoint: '/api/auth/webauthn/authenticate',
+  useBrowserAutofill: false, // Disable autofill to use manual credential picker
 })
 
 const generateRandomEmail = () => {
@@ -24,7 +25,7 @@ const handlePasskeyAuth = async () => {
 
   try {
     let success = false
-    
+
     if (props.mode === 'register') {
       const userName = generateRandomEmail()
       console.log('Attempting passkey registration for:', userName)
@@ -34,15 +35,9 @@ const handlePasskeyAuth = async () => {
       })
       console.log('Registration result:', success)
     } else {
-      // For login, we need to prompt for the email or use the browser's credential manager
-      const userName = prompt('Enter your email:')
-      if (!userName) {
-        error.value = 'Email is required for login'
-        return
-      }
-
-      console.log('Attempting passkey authentication for:', userName)
-      success = await authenticate(userName)
+      // Usernameless authentication - pass null to indicate no specific user
+      console.log('Attempting usernameless passkey authentication')
+      success = await authenticate(null)
       console.log('Authentication result:', success)
     }
 
@@ -53,7 +48,7 @@ const handlePasskeyAuth = async () => {
       await clearNuxtData('user')
       await refreshCookie('nuxt-session')
       console.log('About to navigate to dashboard...')
-      
+
       // Force a full page reload to ensure session is properly read
       window.location.href = '/dashboard'
     } else {
@@ -71,25 +66,22 @@ const handlePasskeyAuth = async () => {
 
 <template>
   <div class="space-y-3">
-    <Button
-      :disabled="isLoading"
-      class="w-full"
-      @click="handlePasskeyAuth"
-    >
+    <Button :disabled="isLoading" class="w-full" @click="handlePasskeyAuth">
       <span v-if="isLoading">
         {{ mode === 'register' ? 'Creating Passkey...' : 'Authenticating...' }}
       </span>
       <span v-else>
-        {{ mode === 'register' ? 'Register with Passkey' : 'Login with Passkey' }}
+        {{ mode === 'register' ? 'Create Passkey Account' : 'Sign in with Passkey' }}
       </span>
     </Button>
 
-    <div v-if="error" class="text-sm text-red-600 bg-red-50 p-2 rounded">
+    <div v-if="error" class="rounded bg-red-50 p-2 text-sm text-red-600">
       {{ error }}
     </div>
 
     <div v-if="mode === 'register'" class="text-xs text-gray-500">
-      A random email will be generated for your passkey account
+      Creates a secure passkey account with no passwords required
     </div>
+    <div v-else class="text-xs text-gray-500">Choose from your saved passkeys</div>
   </div>
 </template>

@@ -3,7 +3,19 @@ import { useDB } from '../../../utils/db'
 import { users, credentials } from '../../../database/schema'
 
 export default defineWebAuthnAuthenticateEventHandler({
+  async getOptions(_event, _userName) {
+    // Configure for usernameless authentication
+    return {
+      userVerification: 'required',
+    }
+  },
   async allowCredentials(event, userName) {
+    // For usernameless authentication, return empty array to allow any credential
+    if (!userName) {
+      return []
+    }
+
+    // If username is provided, filter credentials (for backwards compatibility)
     const db = useDB()
     const result = await db
       .select({ id: credentials.id })
@@ -17,7 +29,7 @@ export default defineWebAuthnAuthenticateEventHandler({
 
     return result.filter((row) => row.id).map((row) => ({ id: row.id! }))
   },
-  async getCredential(event, credentialId) {
+  async getCredential(_event, credentialId) {
     const db = useDB()
     const result = await db.select().from(credentials).where(eq(credentials.id, credentialId))
 
@@ -35,24 +47,13 @@ export default defineWebAuthnAuthenticateEventHandler({
   async onSuccess(event, { credential, authenticationInfo }) {
     const db = useDB()
 
-    // Get user email
-    const result = await db
-      .select({ identifier: users.identifier })
-      .from(credentials)
-      .innerJoin(users, eq(users.id, credentials.userId))
-      .where(eq(credentials.id, credential.id))
-
-    if (!result.length) {
-      throw createError({ statusCode: 400, message: 'User not found' })
-    }
-
-    // Update the counter
+    // Update the counter first
     await db
       .update(credentials)
       .set({ counter: authenticationInfo.newCounter })
       .where(eq(credentials.id, credential.id))
 
-    // Get full user data for session
+    // Get full user data for session using the credential ID
     const userResult = await db
       .select()
       .from(users)
@@ -60,7 +61,7 @@ export default defineWebAuthnAuthenticateEventHandler({
       .where(eq(credentials.id, credential.id))
 
     if (!userResult.length) {
-      throw createError({ statusCode: 400, message: 'User not found' })
+      throw createError({ statusCode: 400, message: 'User not found for credential' })
     }
 
     const dbUser = userResult[0].users
@@ -76,6 +77,6 @@ export default defineWebAuthnAuthenticateEventHandler({
     })
 
     // Return success - frontend will handle redirect
-    console.log('WebAuthn authentication successful for user:', dbUser.id)
+    console.log('WebAuthn authentication successful for user:', dbUser.id, 'identifier:', dbUser.identifier)
   },
 })

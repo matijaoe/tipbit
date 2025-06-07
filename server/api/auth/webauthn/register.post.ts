@@ -32,6 +32,16 @@ async function createUniqueHandle(tx: DatabaseTransaction, baseHandle: string): 
 }
 
 export default defineWebAuthnRegisterEventHandler({
+  async getOptions(event, user) {
+    // Configure for discoverable credentials (usernameless login)
+    return {
+      authenticatorSelection: {
+        residentKey: 'required',
+        requireResidentKey: true,
+        userVerification: 'required',
+      },
+    }
+  },
   async validateUser(userBody, event) {
     const session = await getUserSession(event)
     if (session.user?.email && session.user.email !== userBody.userName) {
