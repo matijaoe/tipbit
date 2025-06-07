@@ -21,10 +21,10 @@ export default defineWebAuthnAuthenticateEventHandler({
       .select({ id: credentials.id })
       .from(users)
       .leftJoin(credentials, eq(credentials.userId, users.id))
-      .where(eq(users.identifier, userName))
+      .where(eq(users.username, userName))
 
     if (!result.length) {
-      throw createError({ statusCode: 400, message: 'User not found' })
+      throw createError({ statusCode: 400, message: 'User not found ' })
     }
 
     return result.filter((row) => row.id).map((row) => ({ id: row.id! }))
@@ -68,8 +68,9 @@ export default defineWebAuthnAuthenticateEventHandler({
     await setUserSession(event, {
       user: {
         id: dbUser.id,
+        username: dbUser.username,
         identifier: dbUser.identifier,
-        identifierType: dbUser.identifierType,
+        displayName: dbUser.displayName,
         role: dbUser.role,
         avatarUrl: dbUser.avatarUrl ?? undefined,
       },

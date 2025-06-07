@@ -4,9 +4,13 @@ import { z } from 'zod'
  * Common validation schemas for reuse across the application
  */
 
-// Profile schemas
-export const handleSchema = z.string().min(1, 'Profile handle is required')
-export const profileIdSchema = z.string().uuid('Invalid profile ID')
+// User schemas  
+export const usernameSchema = z.string().min(1, 'Username is required').regex(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores')
+export const userIdSchema = z.string().uuid('Invalid user ID')
+
+// Legacy schemas (for backward compatibility)
+export const handleSchema = usernameSchema // alias for migration
+export const profileIdSchema = userIdSchema // alias for migration
 
 // Connection schemas
 export const connectionIdSchema = z.string().uuid('Invalid connection ID')

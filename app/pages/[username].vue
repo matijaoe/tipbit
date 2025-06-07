@@ -3,39 +3,39 @@ import { createError } from '#imports'
 import { useRouteParams } from '@vueuse/router'
 import { ChevronDown } from 'lucide-vue-next'
 import { computed } from 'vue'
-import type { ProfilePaymentPreference } from '~~/server/utils/db'
+import type { UserPaymentPreference } from '~~/server/utils/db'
 import type { SanitizedStrikeConnection } from '~~/server/utils/security'
 
-const handle = useRouteParams('handle')
+const username = useRouteParams('username')
 
 definePageMeta({
   layout: 'public',
 })
 
-const { data: profileData } = await useFetch(() => `/api/profiles/${handle.value}`, {
-  pick: ['id', 'handle', 'displayName', 'isPublic', 'avatarUrl'],
-  key: `profile:${handle.value}`,
+const { data: userData } = await useFetch<User>(() => `/api/profile/${username.value}`, {
+  pick: ['username', 'displayName', 'isPublic', 'avatarUrl'],
+  key: `user:${username.value}`,
   dedupe: 'defer',
 })
 
-// Check if profile exists
-if (!profileData.value) {
-  throw createError({ statusCode: 404, message: 'Profile not found' })
+// Check if user exists
+if (!userData.value) {
+  throw createError({ statusCode: 404, message: 'User data not found' })
 }
 
 // TODO: extract somewhere
-type Connection = ProfilePaymentPreference & {
+type Connection = UserPaymentPreference & {
   connection: PaymentConnection & {
     strikeConnection: SanitizedStrikeConnection<StrikeConnection>
   }
 }
 
 // TODO: fetch only top priority connection
-// Only fetch connections for the existing profile
+// Only fetch connections for the existing user
 const { data: connections, status: connectionsStatus } = useLazyFetch<Connection[]>(
-  `/api/profiles/${profileData.value.id}/connections`,
+  `/api/users/${userData.value.username}/connections`,
   {
-    key: `connections:${handle.value}`,
+    key: `connections:${username.value}`,
     default: () => [] as Connection[],
   }
 )
@@ -55,23 +55,23 @@ const activeConnection = computed(() => {
 
 <template>
   <!-- eslint-disable-next-line vue/no-multiple-template-root -->
-  <template v-if="profileData">
+  <template v-if="userData">
     <div class="flex items-center gap-3">
       <Avatar size="base" shape="square">
-        <AvatarImage :src="profileData?.avatarUrl ?? ''" />
-        <AvatarFallback>{{ profileData?.displayName?.charAt(0) ?? '' }}</AvatarFallback>
+        <AvatarImage :src="userData?.avatarUrl ?? ''" />
+        <AvatarFallback>{{ userData?.displayName?.charAt(0) ?? '' }}</AvatarFallback>
       </Avatar>
 
       <div>
-        <h1>{{ profileData?.displayName ?? '???' }}</h1>
-        <span class="text-sm text-muted-foreground">@{{ profileData?.handle }}</span>
+        <h1>{{ userData?.displayName ?? '???' }}</h1>
+        <span class="text-sm text-muted-foreground">@{{ userData?.username }}</span>
       </div>
     </div>
 
     <PaymentInvoice
       v-if="activeConnection"
       class="mt-6"
-      :profile-handle="profileData.handle"
+      :user-username="userData.username"
       :connection-data="activeConnection?.connection"
       :connection-id="activeConnection?.connection.id"
     />
@@ -121,8 +121,8 @@ const activeConnection = computed(() => {
       <CollapsibleContent>
         <Card class="mt-4 overflow-hidden">
           <CardContent class="pt-4">
-            <h3 class="text-sm font-medium text-green-500">Profile</h3>
-            <pre class="no-scrollbar overflow-auto">{{ profileData }}</pre>
+            <h3 class="text-sm font-medium text-green-500">User</h3>
+            <pre class="no-scrollbar overflow-auto">{{ userData }}</pre>
           </CardContent>
           <CardContent class="pt-4">
             <h3 class="text-sm font-medium text-amber-500">Connections</h3>

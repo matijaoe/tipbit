@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm'
 import type { H3Event } from 'h3'
-import { authConnections, profiles, users } from '~~/server/database/schema'
-import type { AuthProvider, IdentifierType } from '~~/shared/constants/auth'
+import { authConnections, users } from '~~/server/database/schema'
+import type { AuthProvider } from '~~/shared/constants/auth'
 import type { DatabaseTransaction } from '../database'
 
 type OAuthProvider = AuthProvider
@@ -10,24 +10,15 @@ export interface OAuthProviderData {
   id: string
   provider: OAuthProvider
   identifier: string
-  identifierType: IdentifierType
   displayName: string
   avatarUrl?: string
-  // profile handle
-  handle?: string
+  username?: string
 }
 
-// Function to find user by email
-async function findUserByEmail(tx: DatabaseTransaction, email: string) {
+// Function to find user by identifier (email or username)
+async function findUserByIdentifier(tx: DatabaseTransaction, identifier: string) {
   return await tx.query.users.findFirst({
-    where: (users) => eq(users.identifierType, 'email') && eq(users.identifier, email),
-  })
-}
-
-// Function to find user by username
-async function findUserByUsername(tx: DatabaseTransaction, username: string) {
-  return await tx.query.users.findFirst({
-    where: (users) => eq(users.identifierType, 'username') && eq(users.identifier, username),
+    where: eq(users.identifier, identifier),
   })
 }
 
@@ -50,13 +41,8 @@ export async function handleOAuthLogin(event: H3Event, providerData: OAuthProvid
         await tx.update(users).set({ avatarUrl: providerData.avatarUrl }).where(eq(users.id, userId))
       }
     } else {
-      // Check if user with this email already exists (for account linking)
-      let existingUser = null
-      if (providerData.identifierType === 'email') {
-        existingUser = await findUserByEmail(tx, providerData.identifier)
-      } else {
-        existingUser = await findUserByUsername(tx, providerData.identifier)
-      }
+      // Check if user with this identifier already exists (for account linking)
+      const existingUser = await findUserByIdentifier(tx, providerData.identifier)
 
       if (existingUser) {
         // Link this provider to existing account
@@ -73,31 +59,24 @@ export async function handleOAuthLogin(event: H3Event, providerData: OAuthProvid
           await tx.update(users).set({ avatarUrl: providerData.avatarUrl }).where(eq(users.id, userId))
         }
       } else {
-        const { identifierType, identifier, avatarUrl } = providerData
+        const { identifier, avatarUrl } = providerData
 
-        // New user - create account, profile and connection
+        // Generate unique username from identifier
+        const username = await createUniqueUsername(tx, providerData.username || identifier)
+
+        // New user - create account and connection (no separate profile)
         const [newUser] = await tx
           .insert(users)
           .values({
-            identifierType,
             identifier,
+            username,
+            displayName: providerData.displayName,
             avatarUrl,
+            isPublic: false, // Private by default
           })
           .returning()
 
         userId = newUser.id
-
-        const handle = await createUniqueHandle(tx, providerData.handle || identifier)
-
-        // Create profile
-        await tx.insert(profiles).values({
-          userId,
-          displayName: providerData.displayName,
-          handle,
-          isPrimary: true,
-          isPublic: true,
-          avatarUrl: providerData.avatarUrl,
-        })
 
         await tx.insert(authConnections).values({
           userId,
@@ -120,8 +99,9 @@ export async function handleOAuthLogin(event: H3Event, providerData: OAuthProvid
     await setUserSession(event, {
       user: {
         id: user.id,
+        username: user.username,
         identifier: user.identifier,
-        identifierType: user.identifierType,
+        displayName: user.displayName,
         role: user.role,
         avatarUrl: user.avatarUrl ?? undefined,
       },
@@ -132,28 +112,37 @@ export async function handleOAuthLogin(event: H3Event, providerData: OAuthProvid
   })
 }
 
-// Function to create a unique handle
-async function createUniqueHandle(tx: DatabaseTransaction, baseHandle: string): Promise<string> {
-  let handle = baseHandle
+// Function to create a unique username with 4-digit random suffix if needed
+async function createUniqueUsername(tx: DatabaseTransaction, identifier: string): Promise<string> {
+  const cleanBase = identifier
     .toLowerCase()
-    .replace(/[^a-zA-Z0-9]/g, '')
+    .replace(/[^a-zA-Z0-9_]/g, '')
     .split('@')[0]
-  let counter = 1
 
-  // Keep checking until we find a unique handle
-  while (true) {
-    // Check if the handle exists using the transaction
-    const existingProfile = await tx.query.profiles.findFirst({
-      where: eq(profiles.handle, handle),
+  // First try the base username without any suffix
+  const existingUser = await tx.query.users.findFirst({
+    where: eq(users.username, cleanBase),
+  })
+
+  if (!existingUser) {
+    return cleanBase
+  }
+
+  // If base username is taken, add 4-digit random number
+  const maxAttempts = 10 // Prevent infinite loops
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const randomSuffix = Math.floor(1000 + Math.random() * 9000) // 4-digit number (1000-9999)
+    const username = `${cleanBase}${randomSuffix}`
+
+    const conflictingUser = await tx.query.users.findFirst({
+      where: eq(users.username, username),
     })
 
-    // If the handle doesn't exist, it's unique
-    if (!existingProfile) {
-      return handle
+    if (!conflictingUser) {
+      return username
     }
-
-    // Handle exists, add a number at the end and try again
-    handle = `${baseHandle}${counter}`
-    counter++
   }
+
+  // Fallback: if somehow all random attempts fail, use timestamp
+  return `${cleanBase}${Date.now().toString().slice(-4)}`
 }

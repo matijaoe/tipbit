@@ -59,6 +59,9 @@ importers:
       eslint:
         specifier: ^9.25.0
         version: 9.28.0(jiti@2.4.2)
+      human-id:
+        specifier: ^4.1.1
+        version: 4.1.1
       libsodium-wrappers:
         specifier: ^0.7.15
         version: 0.7.15
@@ -3498,6 +3501,10 @@ packages:
 
   httpxy@0.1.7:
     resolution: {integrity: sha512-pXNx8gnANKAndgga5ahefxc++tJvNL87CXoRwxn1cJE2ZkWEojF3tNfQIEhZX/vfpt+wzeAzpUI4qkediX1MLQ==}
+
+  human-id@4.1.1:
+    resolution: {integrity: sha512-3gKm/gCSUipeLsRYZbbdA1BD83lBoWUkZ7G9VFrhWPAU76KwYo5KR8V28bpoPm/ygy0x5/GCbpRQdY7VLYCoIg==}
+    hasBin: true
 
   human-signals@5.0.0:
     resolution: {integrity: sha512-AXcZb6vzzrFAUE61HnN4mpLqd/cSIwNQjtNWR0euPm6y0iqx3G4gOXaIDdtdDwZmhwe82LA6+zinmW4UBWVePQ==}
@@ -9494,6 +9501,8 @@ snapshots:
       - supports-color
 
   httpxy@0.1.7: {}
+
+  human-id@4.1.1: {}
 
   human-signals@5.0.0: {}
 

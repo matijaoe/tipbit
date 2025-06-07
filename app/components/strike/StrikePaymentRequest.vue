@@ -7,7 +7,7 @@ import { formatAmount, satsToBtc } from '~/utils/format'
 import type { StrikeCreateReceiveRequest, StrikeDecimalAmount } from '~~/shared/providers/strike/types'
 
 const props = defineProps<{
-  profileHandle: string
+  userUsername: string
   connectionId: string
 }>()
 
@@ -160,7 +160,7 @@ const downloadQr = () => {
               class="flex w-full flex-col gap-4"
             >
               <p v-if="satsAmount" class="text-xl">
-                Tip <strong>{{ formattedSatsAmount }} sats</strong> to {{ profileHandle }}
+                Tip <strong>{{ formattedSatsAmount }} sats</strong> to @{{ userUsername }}
               </p>
 
               <img
@@ -190,7 +190,7 @@ const downloadQr = () => {
               class="flex w-full flex-col items-start gap-4"
             >
               <p v-if="satsAmount" class="text-xl">
-                Tip <strong>{{ formattedSatsAmount }} sats</strong> to {{ profileHandle }}
+                Tip <strong>{{ formattedSatsAmount }} sats</strong> to @{{ userUsername }}
               </p>
 
               <img

@@ -6,7 +6,7 @@ type ConnectionData = PaymentConnection & {
 }
 
 defineProps<{
-  profileHandle: string
+  userUsername: string
   connectionData: ConnectionData
   connectionId?: string
 }>()
@@ -19,7 +19,7 @@ defineProps<{
       <!-- Use StrikePaymentRequest for users with API keys (supports both Lightning and on-chain) -->
       <StrikePaymentRequest
         v-if="connectionData.strikeConnection.hasApiKey && connectionId"
-        :profile-handle="profileHandle"
+        :user-username="userUsername"
         :connection-id="connectionId"
       />
 

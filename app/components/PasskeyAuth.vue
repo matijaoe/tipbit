@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import { humanId } from 'human-id'
+
 interface Props {
   mode: 'register' | 'login'
 }
@@ -14,9 +16,12 @@ const { register, authenticate } = useWebAuthn({
   useBrowserAutofill: false, // Disable autofill to use manual credential picker
 })
 
-const generateRandomEmail = () => {
-  const randomString = Math.random().toString(36).substring(2, 15)
-  return `user-${randomString}@passkey.local`
+// TODO: should not auto generate username. should ask user and validate uniqueness
+const generateRandomUsername = () => {
+  return humanId({
+    separator: '_',
+    capitalize: false,
+  })
 }
 
 const handlePasskeyAuth = async () => {
@@ -27,17 +32,17 @@ const handlePasskeyAuth = async () => {
     let success = false
 
     if (props.mode === 'register') {
-      const userName = generateRandomEmail()
+      const userName = generateRandomUsername()
       console.log('Attempting passkey registration for:', userName)
       success = await register({
         userName,
-        displayName: `User ${userName.split('@')[0]}`,
+        displayName: `User ${userName}`,
       })
       console.log('Registration result:', success)
     } else {
-      // Usernameless authentication - pass null to indicate no specific user
+      // Usernameless authentication - pass undefined to indicate no specific user
       console.log('Attempting usernameless passkey authentication')
-      success = await authenticate(null)
+      success = await authenticate(undefined)
       console.log('Authentication result:', success)
     }
 

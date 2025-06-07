@@ -1,34 +1,43 @@
 import { z } from 'zod'
 import { eq } from 'drizzle-orm'
 import { useDB } from '../../../utils/db'
-import { users, credentials, profiles } from '../../../database/schema'
+import { users, credentials } from '../../../database/schema'
 import { randomUUID } from 'uncrypto'
 import type { DatabaseTransaction } from '../../../database'
 
-// Function to create a unique handle
-async function createUniqueHandle(tx: DatabaseTransaction, baseHandle: string): Promise<string> {
-  let handle = baseHandle
+// Function to create a unique username
+async function createUniqueUsername(tx: DatabaseTransaction, baseUsername: string): Promise<string> {
+  const cleanBase = baseUsername
     .toLowerCase()
-    .replace(/[^a-zA-Z0-9]/g, '')
+    .replace(/[^a-zA-Z0-9_]/g, '')
     .split('@')[0]
-  let counter = 1
 
-  // Keep checking until we find a unique handle
-  while (true) {
-    // Check if the handle exists using the transaction
-    const existingProfile = await tx.query.profiles.findFirst({
-      where: eq(profiles.handle, handle),
-    })
+  // First try the base username without any suffix
+  const existingUser = await tx.query.users.findFirst({
+    where: eq(users.username, cleanBase),
+  })
 
-    // If the handle doesn't exist, it's unique
-    if (!existingProfile) {
-      return handle
-    }
-
-    // Handle exists, add a number at the end and try again
-    handle = `${baseHandle.toLowerCase().replace(/[^a-zA-Z0-9]/g, '').split('@')[0]}${counter}`
-    counter++
+  if (!existingUser) {
+    return cleanBase
   }
+
+  // If base username is taken, add 4-digit random number
+  const maxAttempts = 10 // Prevent infinite loops
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const randomSuffix = Math.floor(1000 + Math.random() * 9000) // 4-digit number (1000-9999)
+    const username = `${cleanBase}${randomSuffix}`
+    
+    const conflictingUser = await tx.query.users.findFirst({
+      where: eq(users.username, username),
+    })
+    
+    if (!conflictingUser) {
+      return username
+    }
+  }
+  
+  // Fallback: if somehow all random attempts fail, use timestamp
+  return `${cleanBase}${Date.now().toString().slice(-4)}`
 }
 
 export default defineWebAuthnRegisterEventHandler({
@@ -43,13 +52,8 @@ export default defineWebAuthnRegisterEventHandler({
     }
   },
   async validateUser(userBody, event) {
-    const session = await getUserSession(event)
-    if (session.user?.email && session.user.email !== userBody.userName) {
-      throw createError({ statusCode: 400, message: 'Email not matching current session' })
-    }
-
     return z.object({
-      userName: z.string().email().trim(),
+      userName: z.string().min(3).max(50).trim().regex(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores'),
       displayName: z.string().trim().optional(),
     }).parse(userBody)
   },
@@ -60,7 +64,7 @@ export default defineWebAuthnRegisterEventHandler({
         .select({ id: credentials.id })
         .from(users)
         .innerJoin(credentials, eq(credentials.userId, users.id))
-        .where(eq(users.identifier, user.userName))
+        .where(eq(users.username, user.userName))
 
       return result.filter(row => row.id).map(row => ({ id: row.id }))
     } catch (error) {
@@ -74,33 +78,26 @@ export default defineWebAuthnRegisterEventHandler({
       let dbUser: any = null
 
       await db.transaction(async (tx) => {
-        // Check if user already exists with this email
-        const existingUsers = await tx.select().from(users).where(eq(users.identifier, user.userName))
+        // Check if user already exists with this username
+        const existingUsers = await tx.select().from(users).where(eq(users.username, user.userName))
         dbUser = existingUsers[0]
         
         if (!dbUser) {
-          // Create new user with passkey identifier type
+          // Ensure username is unique
+          const uniqueUsername = await createUniqueUsername(tx, user.userName)
+          
+          // Create new user with username as both identifier and username
           const userId = randomUUID()
           const [newUser] = await tx.insert(users).values({
             id: userId,
-            identifierType: 'passkey',
-            identifier: user.userName,
+            identifier: uniqueUsername, // username serves as identifier for passkeys
+            username: uniqueUsername,
+            displayName: user.displayName || `${uniqueUsername}`,
+            isPublic: false, // Private by default
           }).returning()
           
           dbUser = newUser
-
-          // Create a default profile for the new user
-          const baseHandle = user.userName.split('@')[0].toLowerCase().replace(/[^a-zA-Z0-9]/g, '') || 'user'
-          const handle = await createUniqueHandle(tx, baseHandle)
-          console.log('Creating profile with handle:', handle, 'for user:', dbUser.id)
-          
-          await tx.insert(profiles).values({
-            userId: dbUser.id,
-            displayName: user.displayName || `User ${baseHandle}`,
-            handle,
-            isPrimary: true,
-            isPublic: true,
-          })
+          console.log('Created new user with username:', uniqueUsername, 'for user:', dbUser.id)
         }
 
         if (!dbUser) {
@@ -118,7 +115,7 @@ export default defineWebAuthnRegisterEventHandler({
           userId: dbUser.id,
           publicKey: credential.publicKey,
           counter: credential.counter,
-          backedUp: credential.backedUp ? 1 : 0,
+          backedUp: credential.backedUp,
           transports: JSON.stringify(credential.transports ?? []),
         })
       })
@@ -127,8 +124,9 @@ export default defineWebAuthnRegisterEventHandler({
       await setUserSession(event, {
         user: {
           id: dbUser.id,
+          username: dbUser.username,
           identifier: dbUser.identifier,
-          identifierType: dbUser.identifierType,
+          displayName: dbUser.displayName,
           role: dbUser.role,
           avatarUrl: dbUser.avatarUrl ?? undefined,
         },

@@ -8,11 +8,10 @@ export default defineOAuthXEventHandler({
         id: xUser.id,
         provider: 'x',
         // TODO: email should also be possible
-        identifier: `x:${xUser.username}`,
-        identifierType: 'username',
+        identifier: `${xUser.username}@x`,
+        username: xUser.username,
         displayName: xUser.name || xUser.username,
         avatarUrl: xUser.profile_image_url,
-        handle: xUser.username,
       })
     } catch (error) {
       console.error('X auth error:', error)

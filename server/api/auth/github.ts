@@ -1,17 +1,15 @@
-import type { GitHubOAuthUser } from '~~/server/types/oauth'
 import { handleOAuthLogin } from '~~/server/utils/auth'
 
 export default defineOAuthGitHubEventHandler({
-  async onSuccess(event, { user: githubUser }: { user: GitHubOAuthUser }) {
+  async onSuccess(event, { user: githubUser }) {
     try {
       return await handleOAuthLogin(event, {
         id: githubUser.id.toString(),
         provider: 'github',
-        identifier: githubUser.email || `github:${githubUser.login}`,
-        identifierType: githubUser.email ? 'email' : 'username',
+        identifier: githubUser.email || `${githubUser.login}@github`,
+        username: githubUser.login,
         displayName: githubUser.name || githubUser.login,
         avatarUrl: githubUser.avatar_url,
-        handle: githubUser.login,
       })
     } catch (error) {
       console.error('GitHub auth error:', error)

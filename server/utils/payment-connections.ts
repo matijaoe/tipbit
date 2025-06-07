@@ -5,8 +5,8 @@ import {
   albyConnections,
   coinosConnections,
   paymentConnections,
-  profilePaymentPreferences,
-  profiles,
+  userPaymentPreferences,
+  users,
   strikeConnections,
 } from '../database/schema'
 import { encryptForStorage } from './encryption'
@@ -53,32 +53,32 @@ export const getUserConnections = async (userId: string) => {
  * Update priorities based on new order
  * connectionIds should be an array of connection IDs in the desired order
  */
-export const updateConnectionPriorities = async (profileId: string, connectionIds: string[]) => {
+export const updateConnectionPriorities = async (userId: string, connectionIds: string[]) => {
   const db = useDB()
   // Start a transaction to ensure all updates happen together
   return await db.transaction(async (tx) => {
-    // Delete existing preferences for this profile
-    await tx.delete(profilePaymentPreferences).where(eq(profilePaymentPreferences.profileId, profileId))
+    // Delete existing preferences for this user
+    await tx.delete(userPaymentPreferences).where(eq(userPaymentPreferences.userId, userId))
 
     // Insert new preferences with updated priorities
     const newPreferences = connectionIds.map((connectionId, index) => ({
-      profileId,
+      userId,
       connectionId,
       priority: index + 1, // 1-based priority (1 is highest)
     }))
 
-    return await tx.insert(profilePaymentPreferences).values(newPreferences).returning()
+    return await tx.insert(userPaymentPreferences).values(newPreferences).returning()
   })
 }
 
 /**
- * Get the highest priority enabled payment connection for a profile
+ * Get the highest priority enabled payment connection for a user
  */
-export const getProfileActiveConnection = async (profileId: string) => {
+export const getUserActiveConnection = async (userId: string) => {
   const db = useDB()
-  // First, get the profile's payment preferences in priority order
-  const preferences = await db.query.profilePaymentPreferences.findMany({
-    where: eq(profilePaymentPreferences.profileId, profileId),
+  // First, get the user's payment preferences in priority order
+  const preferences = await db.query.userPaymentPreferences.findMany({
+    where: eq(userPaymentPreferences.userId, userId),
     orderBy: (pref) => pref.priority,
     with: {
       connection: {
@@ -156,12 +156,12 @@ export const hasPaymentConnections = async (userId: string) => {
 }
 
 /**
- * Get all profiles with their payment preferences
+ * Get user with their payment preferences
  */
-export const getProfilesWithPaymentPreferences = async (userId: string) => {
+export const getUserWithPaymentPreferences = async (userId: string) => {
   const db = useDB()
-  return await db.query.profiles.findMany({
-    where: eq(profiles.userId, userId),
+  return await db.query.users.findFirst({
+    where: eq(users.id, userId),
     with: {
       paymentPreferences: {
         with: {
@@ -172,6 +172,10 @@ export const getProfilesWithPaymentPreferences = async (userId: string) => {
     },
   })
 }
+
+// Backward compatibility aliases
+export const getProfileActiveConnection = getUserActiveConnection
+export const getProfilesWithPaymentPreferences = getUserWithPaymentPreferences
 
 // TODO: infer from schema
 type ConnectionData = {

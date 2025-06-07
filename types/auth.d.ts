@@ -4,8 +4,9 @@ import type { Role } from '~~/lib/general/constants'
 declare module '#auth-utils' {
   interface User {
     id: string
+    username: string
     identifier: string
-    identifierType: IdentifierType
+    displayName?: string
     role: Role
     avatarUrl?: string
   }
