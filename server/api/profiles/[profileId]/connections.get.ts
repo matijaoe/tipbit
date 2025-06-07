@@ -2,7 +2,9 @@ import { and, eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { createError, defineEventHandler, getValidatedRouterParams } from 'h3'
 import { profilePaymentPreferences } from '~~/server/database/schema'
+import type { SanitizedStrikeConnection } from '~~/server/utils/security'
 import { sanitizeStrikeConnection } from '~~/server/utils/security'
+import type { ProfilePaymentPreference } from '~~/server/utils/db'
 
 const paramsSchema = z.object({
   profileId: z.string().uuid(),
@@ -70,6 +72,13 @@ export default defineEventHandler(async (event) => {
     }))
   }
 
+  // TODO: extract somewhere
+  type Connection = ProfilePaymentPreference & {
+    connection: PaymentConnection & {
+      strikeConnection: SanitizedStrikeConnection<StrikeConnection>
+    }
+  }
+
   return preferences.map((pref) => ({
     ...pref,
     connection: pref.connection
@@ -80,5 +89,5 @@ export default defineEventHandler(async (event) => {
             : pref.connection.strikeConnection,
         }
       : pref.connection,
-  }))
+  })) as Connection[]
 })

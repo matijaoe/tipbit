@@ -1,8 +1,8 @@
 <script lang="ts" setup>
-type ConnectionData = {
-  serviceType: 'strike'
-  handle: string
-  hasApiKey: boolean
+import type { SanitizedStrikeConnection } from '~~/server/utils/security'
+
+type ConnectionData = PaymentConnection & {
+  strikeConnection: SanitizedStrikeConnection<StrikeConnection>
 }
 
 defineProps<{
@@ -18,13 +18,20 @@ defineProps<{
     <template v-if="connectionData.serviceType === 'strike'">
       <!-- Use StrikePaymentRequest for users with API keys (supports both Lightning and on-chain) -->
       <StrikePaymentRequest
-        v-if="connectionData.hasApiKey && connectionId"
+        v-if="connectionData.strikeConnection.hasApiKey && connectionId"
         :profile-handle="profileHandle"
         :connection-id="connectionId"
       />
 
       <!-- Use StrikeInvoice for users without API keys (Lightning only) -->
-      <StrikeInvoice v-else :strike-handle="connectionData.handle" />
+      <StrikeInvoice
+        v-else-if="connectionData.strikeConnection.handle"
+        :strike-handle="connectionData.strikeConnection.handle"
+      />
+
+      <div v-else>
+        <p>No required Strike profile data available</p>
+      </div>
     </template>
 
     <!-- Future: Other payment service types can be added here -->

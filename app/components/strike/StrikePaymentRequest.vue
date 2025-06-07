@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { useQRCode } from '@vueuse/integrations/useQRCode'
+import { ExternalLink } from 'lucide-vue-next'
 import { AnimatePresence, Motion } from 'motion-v'
 import { useToast } from '~/components/ui/toast'
 import { formatAmount, satsToBtc } from '~/utils/format'
@@ -85,8 +86,10 @@ const createAmountlessRequest = async () => {
     return
   }
 
-  satsAmount.value = 0
+  satsAmount.value = undefined
+
   setIsRequestPending(true)
+
   const body: StrikeCreateReceiveRequest & { connectionId: string } = {
     connectionId: props.connectionId,
     bolt11: {},
@@ -138,7 +141,7 @@ const downloadQr = () => {
       </CardContent>
     </Card>
 
-    <div v-else-if="lnInvoice || onchainAddress" class="rounded-lg bg-card pt-4">
+    <div v-else-if="lnInvoice || onchainAddress">
       <Tabs v-model="activeTab" class="w-full">
         <TabsList class="mb-4 grid w-fit grid-cols-2">
           <TabsTrigger value="lightning"> ⚡ Lightning </TabsTrigger>
@@ -154,15 +157,21 @@ const downloadQr = () => {
               :animate="{ x: 0, opacity: 1 }"
               :exit="{ x: -20, opacity: 0 }"
               :transition="{ duration: 0.2 }"
-              class="flex w-full max-w-xs flex-col gap-4"
+              class="flex w-full flex-col gap-4"
             >
               <p v-if="satsAmount" class="text-xl">
                 Tip <strong>{{ formattedSatsAmount }} sats</strong> to {{ profileHandle }}
               </p>
 
-              <img v-if="lnInvoiceQr" id="invoice-qr" class="rounded-xl" :src="lnInvoiceQr" alt="Invoice QR Code" />
+              <img
+                v-if="lnInvoiceQr"
+                id="invoice-qr"
+                class="max-w-72 overflow-hidden rounded-xl"
+                :src="lnInvoiceQr"
+                alt="Invoice QR Code"
+              />
 
-              <div class="mt-auto flex flex-wrap justify-end gap-3">
+              <div class="mt-auto flex flex-wrap justify-start gap-3">
                 <Button size="sm" variant="secondary" @click="downloadQr">Download QR</Button>
                 <Button size="sm" @click="() => copyInvoice(lnInvoice)">
                   {{ invoiceCopied ? 'Copied!!! 😎' : 'Copy to clipboard' }}
@@ -178,19 +187,34 @@ const downloadQr = () => {
               :animate="{ x: 0, opacity: 1 }"
               :exit="{ x: 20, opacity: 0 }"
               :transition="{ duration: 0.2 }"
-              class="flex w-full max-w-xs flex-col items-start gap-4"
+              class="flex w-full flex-col items-start gap-4"
             >
               <p v-if="satsAmount" class="text-xl">
                 Tip <strong>{{ formattedSatsAmount }} sats</strong> to {{ profileHandle }}
               </p>
 
-              <div v-if="onchainAddressQr" id="onchain-qr" class="overflow-hidden rounded-xl">
-                <img :src="onchainAddressQr" alt="Bitcoin Address QR Code" />
-              </div>
+              <img
+                v-if="onchainAddressQr"
+                id="onchain-qr"
+                class="max-w-72 overflow-hidden rounded-xl"
+                :src="onchainAddressQr"
+                alt="Bitcoin Address QR Code"
+              />
 
-              <p class="break-all">{{ onchainAddress }}</p>
+              <p class="flex items-center gap-2">
+                <span class="break-all font-mono">{{ onchainAddress }}</span>
 
-              <div class="mt-auto flex flex-wrap justify-end gap-3">
+                <a
+                  :href="`https://mempool.space/address/${onchainAddress}`"
+                  target="_blank"
+                  class="flex items-center justify-center text-base text-blue-500 hover:text-blue-600 hover:underline"
+                  aria-label="View on mempool.space"
+                >
+                  <ExternalLink class="size-5" />
+                </a>
+              </p>
+
+              <div class="mt-auto flex flex-wrap justify-start gap-3">
                 <Button size="sm" variant="secondary" @click="downloadQr">Download QR</Button>
                 <Button size="sm" @click="() => copyAddress(onchainAddress)">
                   {{ addressCopied ? 'Copied!!! 😎' : 'Copy to clipboard' }}

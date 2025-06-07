@@ -1,6 +1,7 @@
 import type { StrikeConnection } from './db'
 
-type SanitizedStrikeConnection<T extends Partial<StrikeConnection>> = Omit<T, 'apiKey'> & {
+// TODO: move to types
+export type SanitizedStrikeConnection<T extends Partial<StrikeConnection>> = Omit<T, 'apiKey'> & {
   hasApiKey: boolean
 }
 

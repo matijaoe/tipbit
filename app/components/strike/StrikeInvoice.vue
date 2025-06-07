@@ -3,7 +3,7 @@ import { useQRCode } from '@vueuse/integrations/useQRCode'
 import { satsToBtc } from '~/utils/format'
 import type { Invoice, InvoiceRequestWithReceiver } from '~~/shared/payments/types'
 import type { StrikeAccountProfile, StrikeInvoice } from '~~/shared/providers/strike/types'
-import { useToast } from './ui/toast'
+import { useToast } from '../ui/toast'
 
 const props = defineProps<{
   strikeHandle?: StrikeAccountProfile['handle']
@@ -133,28 +133,26 @@ const downloadQr = () => {
 
     <div v-else-if="lnInvoice" class="space-y-4">
       <Card>
-        <CardHeader>
-          <CardDescription>Generate an invoice</CardDescription>
-        </CardHeader>
-        <CardContent>
+        <CardContent class="pt-4">
           <div class="space-y-4">
-            <div v-if="lnInvoiceQr" class="max-w-xs overflow-hidden rounded-xl">
-              <img :src="lnInvoiceQr" alt="Lightning Invoice QR Code" />
-            </div>
+            <img
+              v-if="lnInvoiceQr"
+              :src="lnInvoiceQr"
+              class="max-w-72 overflow-hidden rounded-xl"
+              alt="Lightning Invoice QR Code"
+            />
+
             <div class="flex flex-wrap gap-3">
               <Button size="sm" variant="secondary" @click="downloadQr">Download QR</Button>
               <Button size="sm" @click="() => copyInvoice(lnInvoice)">
-                {{ invoiceCopied ? 'Copied! 😎' : 'Copy Invoice' }}
+                {{ invoiceCopied ? 'Copied! 😎' : 'Copy invoice' }}
               </Button>
+
+              <Button v-if="invoiceId" size="sm" variant="destructive" @click="cancelPendingInvoice"> Cancel </Button>
             </div>
           </div>
         </CardContent>
       </Card>
-
-      <div class="flex justify-center gap-3">
-        <Button variant="outline" @click="clearInvoice">Create New Payment</Button>
-        <Button v-if="invoiceId" size="sm" variant="destructive" @click="cancelPendingInvoice"> Cancel Invoice </Button>
-      </div>
     </div>
   </div>
 </template>

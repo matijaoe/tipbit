@@ -16,7 +16,7 @@ const { user } = useUserSession()
       </Button>
     </header>
 
-    <main class="mx-auto mt-[12vh] max-w-lg">
+    <main class="mx-auto mt-[8vh] max-w-lg">
       <slot />
     </main>
   </div>
