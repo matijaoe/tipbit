@@ -34,6 +34,8 @@
     "@nuxt/fonts": "^0.11.1",
     "@nuxtjs/tailwindcss": "6.13.2",
     "@pinia/nuxt": "0.11.0",
+    "@simplewebauthn/browser": "^11.0.0",
+    "@simplewebauthn/server": "^11.0.0",
     "@tanstack/vue-table": "^8.21.3",
     "@vueuse/core": "^13.1.0",
     "@vueuse/integrations": "^13.1.0",

@@ -5,7 +5,7 @@ export default defineNuxtConfig({
     '@vueuse/nuxt',
     '@nuxtjs/tailwindcss',
     'motion-v/nuxt',
-    'nuxt-auth-utils',
+    ['nuxt-auth-utils', { webAuthn: true }],
     '@nuxt/fonts',
     '@nuxtjs/color-mode',
     '@pinia/nuxt',
@@ -61,5 +61,16 @@ export default defineNuxtConfig({
     dbFileName: process.env.DB_FILE_NAME,
     transitPrivateKey: process.env.NUXT_TRANSIT_PRIVATE_KEY,
     storageEncryptionKey: process.env.NUXT_STORAGE_ENCRYPTION_KEY,
+    webauthn: {
+      register: {
+        rpName: 'Tipbit',
+        rpId: 'localhost',
+        origin: 'http://localhost:3000',
+      },
+      authenticate: {
+        rpId: 'localhost',
+        origin: 'http://localhost:3000',
+      },
+    },
   },
 })
