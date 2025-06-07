@@ -1,5 +1,7 @@
-// TODO: move somewhere
-type SanitizedStrikeConnection<T extends Partial<StrikeConnection>> = Omit<T, 'apiKey'> & {
+import type { StrikeConnection } from './db'
+
+// TODO: move to types
+export type SanitizedStrikeConnection<T extends Partial<StrikeConnection>> = Omit<T, 'apiKey'> & {
   hasApiKey: boolean
 }
 

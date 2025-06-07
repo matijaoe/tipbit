@@ -10,7 +10,7 @@ const { user } = useCurrentUser()
 
 const authConnections = computed(() => user.value?.authConnections)
 const profiles = computed(() => user.value?.profiles ?? [])
-// Function to get provider display name
+
 function getProviderName(provider: AuthProvider) {
   const names = {
     github: 'GitHub',
@@ -72,7 +72,7 @@ function getProviderName(provider: AuthProvider) {
             </div>
           </div>
         </div>
-      </CardContent>  
+      </CardContent>
     </Card>
 
     <!-- Profiles Section -->

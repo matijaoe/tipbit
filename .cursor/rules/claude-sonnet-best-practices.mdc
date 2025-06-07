@@ -3,7 +3,7 @@ description:
 globs: 
 alwaysApply: true
 ---
-# Guidelines for Using Claude 3.7 Sonnet in Cursor
+# Guidelines for Using Claude Sonnet in Cursor
 
 # Instructions
 

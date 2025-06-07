@@ -20,26 +20,20 @@ const {
   profileHandle,
 } = useStrikeConnection()
 
-// Edit mode state
 const [isEditMode, toggleEditMode] = useToggle(false)
 const isDetailsOpen = ref(false)
 const showApiKey = ref(false)
 
-// Check if API key is connected
 const hasApiKey = computed(() => connection.value?.strikeConnection.hasApiKey)
 
-// Form data
 const localHandle = ref(profileHandle.value ?? '')
 const apiKey = ref('')
 
-// Step management
 const currentStep = ref(1) // 1 = handle entry, 2 = optional API key
 
-// Refs for input elements
 const handleInputRef = useTemplateRef('handle-input')
 const apiKeyInputRef = useTemplateRef('api-key-input')
 
-// Computed properties for display
 const strikeProfileAddress = computed(() => {
   if (!isDefined(profileHandle)) {
     return ''
@@ -77,18 +71,15 @@ const goToApiKeyStep = () => {
   // Move to step 2 (optional API key)
   currentStep.value = 2
 
-  // Focus the API key input after the DOM updates
   nextTick(() => {
     const el = apiKeyInputRef.value?.$el as HTMLElement | null
     el?.focus()
   })
 }
 
-// Go back to handle step
 const goBackToHandleStep = () => {
   currentStep.value = 1
 
-  // Focus the handle input after the DOM updates
   nextTick(() => {
     const el = handleInputRef.value?.$el as HTMLElement | null
     el?.focus()
@@ -107,12 +98,10 @@ const createConnection = async (includeApiKey = false) => {
       return
     }
 
-    // Prepare request body
     const requestBody: StrikeConnectionRequestBody = {
       handle: localHandle.value,
     }
 
-    // Add API key if provided and requested
     if (includeApiKey && apiKey.value) {
       requestBody.apiKey = await encryptForServer(apiKey.value)
     }
@@ -127,9 +116,8 @@ const createConnection = async (includeApiKey = false) => {
       throw new Error('Failed to connect Strike account')
     }
 
-    // TODO: handle invalid ky
+    // TODO: handle invalid key
 
-    // Show success toast
     toast({
       title: 'Success!',
       description:
@@ -192,6 +180,7 @@ defineExpose({
   connection,
   clearConnection,
   isEditMode,
+  toggleEditMode: toggleEditModeHandler,
 })
 </script>
 

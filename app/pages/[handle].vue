@@ -3,7 +3,8 @@ import { createError } from '#imports'
 import { useRouteParams } from '@vueuse/router'
 import { ChevronDown } from 'lucide-vue-next'
 import { computed } from 'vue'
-import type { PaymentServiceType } from '~~/shared/payments/constants'
+import type { ProfilePaymentPreference } from '~~/server/utils/db'
+import type { SanitizedStrikeConnection } from '~~/server/utils/security'
 
 const handle = useRouteParams('handle')
 
@@ -17,54 +18,44 @@ const { data: profileData } = await useFetch(() => `/api/profiles/${handle.value
   dedupe: 'defer',
 })
 
-// Define the type for connection data
-type ConnectionPreference = {
-  id: string
-  connection: {
-    serviceType: PaymentServiceType
-    name?: string
-    strikeConnection?: {
-      strikeProfileId: string
-    }
-  }
-}
-
 // Check if profile exists
 if (!profileData.value) {
   throw createError({ statusCode: 404, message: 'Profile not found' })
 }
 
-// TODO: fetch only default (top) connection
+// TODO: extract somewhere
+type Connection = ProfilePaymentPreference & {
+  connection: PaymentConnection & {
+    strikeConnection: SanitizedStrikeConnection<StrikeConnection>
+  }
+}
+
+// TODO: fetch only top priority connection
 // Only fetch connections for the existing profile
-const { data: preferences, status: preferencesStatus } = useLazyFetch<ConnectionPreference[]>(
+const { data: connections, status: connectionsStatus } = useLazyFetch<Connection[]>(
   `/api/profiles/${profileData.value.id}/connections`,
   {
     key: `connections:${handle.value}`,
-    default: () => [] as ConnectionPreference[],
+    default: () => [] as Connection[],
   }
 )
 
-const isPreferencesLoading = computed(() => preferencesStatus.value === 'pending')
+const isConnectionsLoading = computed(() => connectionsStatus.value === 'pending')
 
-// Find the first Strike connection (if any)
-const strikeConnection = computed(() => {
-  if (!preferences.value?.length) return undefined
+// TODO: later maybe give choice of connection to user, if they are diferrent enough (lightning vs onchain vs ecash vs silent)
+// TODO: return directly from server, don't fetch all
+const activeConnection = computed(() => {
+  if (!connections.value?.length) {
+    return undefined
+  }
 
-  return preferences.value.find(
-    (pref) => pref.connection?.serviceType === 'strike' && pref.connection?.strikeConnection
-  )
-})
-
-// Get the Strike handle for the invoice component
-const strikeHandle = computed(() => {
-  const connection = strikeConnection.value
-  if (!connection?.connection?.name) return undefined
-  return connection.connection.name
+  return connections.value.toSorted((a, b) => a.priority - b.priority).at(0)
 })
 </script>
 
 <template>
-  <div v-if="profileData">
+  <!-- eslint-disable-next-line vue/no-multiple-template-root -->
+  <template v-if="profileData">
     <div class="flex items-center gap-3">
       <Avatar size="base" shape="square">
         <AvatarImage :src="profileData?.avatarUrl ?? ''" />
@@ -77,63 +68,48 @@ const strikeHandle = computed(() => {
       </div>
     </div>
 
-    <div v-if="preferences?.length" class="mt-6">
-      <h2 class="text-lg font-medium">Payment Methods</h2>
-      <div class="mt-2 space-y-2">
-        <div v-for="pref in preferences" :key="pref.id" class="rounded border p-3">
-          <div v-if="pref.connection?.serviceType === 'strike'">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <span>{{ pref.connection.name || 'Strike' }}</span>
-              </div>
-              <div v-if="pref.connection.strikeConnection?.strikeProfileId" class="text-sm text-muted-foreground">
-                ID: {{ pref.connection.strikeConnection.strikeProfileId }}
-              </div>
-            </div>
-          </div>
+    <PaymentInvoice
+      v-if="activeConnection"
+      class="mt-6"
+      :profile-handle="profileData.handle"
+      :connection-data="activeConnection?.connection"
+      :connection-id="activeConnection?.connection.id"
+    />
 
-          <div v-else-if="pref.connection?.serviceType === 'coinos'">
-            <div class="flex items-center gap-2">
-              <span>{{ pref.connection.name || 'Coinos' }}</span>
-            </div>
-          </div>
-
-          <div v-else-if="pref.connection?.serviceType === 'alby'">
-            <div class="flex items-center gap-2">
-              <span>{{ pref.connection.name || 'Alby' }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div v-else-if="isPreferencesLoading" class="mt-6">
-      <h2 class="text-lg font-medium">Payment Methods</h2>
-      <div class="mt-2 space-y-2">
-        <div v-for="i in 2" :key="i" class="animate-pulse rounded border p-3">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <div class="h-6 w-6 rounded-full bg-muted"></div>
-              <div class="h-5 w-24 rounded bg-muted"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div v-else-if="!isPreferencesLoading" class="mt-6">
-      <h2 class="text-lg font-medium">Payment Methods</h2>
-      <div class="mt-2">
-        <p class="text-muted-foreground">No payment methods connected</p>
-      </div>
-    </div>
-
-    <StrikeInvoice v-if="strikeHandle" class="mt-6" :handle="strikeHandle" />
-
-    <!-- Loading state for Strike Invoice -->
-    <div v-else-if="isPreferencesLoading" class="mt-6 animate-pulse">
+    <div v-else-if="isConnectionsLoading" class="mt-6 animate-pulse">
       <div class="h-40 rounded-md bg-muted"></div>
     </div>
+
+    <Collapsible class="mt-4">
+      <CollapsibleTrigger as-child>
+        <Button variant="link" size="sm" class="pl-0">
+          Show payment connections
+          <ChevronDown class="size-4" />
+        </Button>
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <Card class="mt-4">
+          <CardContent class="pt-4">
+            <div v-if="connections?.length" class="space-y-2">
+              <div v-for="pref in connections" :key="pref.id">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span>{{ pref.connection?.name ?? pref.connection?.serviceType }}</span>
+                  </div>
+                  <Badge
+                    v-if="pref.connection"
+                    :variant="pref.connection.strikeConnection?.hasApiKey ? 'default' : 'outline'"
+                  >
+                    {{ pref.connection.strikeConnection?.hasApiKey ? 'Receive request' : 'Invoice' }}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+            <div v-else class="text-sm text-muted-foreground">No payment connections found</div>
+          </CardContent>
+        </Card>
+      </CollapsibleContent>
+    </Collapsible>
 
     <Collapsible class="mt-4">
       <CollapsibleTrigger as-child>
@@ -145,14 +121,15 @@ const strikeHandle = computed(() => {
       <CollapsibleContent>
         <Card class="mt-4 overflow-hidden">
           <CardContent class="pt-4">
+            <h3 class="text-sm font-medium text-green-500">Profile</h3>
             <pre class="no-scrollbar overflow-auto">{{ profileData }}</pre>
-            <pre v-if="preferences" class="no-scrollbar mt-4 overflow-auto">{{ preferences }}</pre>
+          </CardContent>
+          <CardContent class="pt-4">
+            <h3 class="text-sm font-medium text-amber-500">Connections</h3>
+            <pre v-if="connections" class="no-scrollbar mt-4 overflow-auto">{{ connections }}</pre>
           </CardContent>
         </Card>
       </CollapsibleContent>
     </Collapsible>
-  </div>
-  <div v-else>
-    <p>Profile not found</p>
-  </div>
+  </template>
 </template>

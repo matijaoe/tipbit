@@ -19,7 +19,6 @@ export type StrikeApiOptions = {
 
 // Get or create the appropriate API client based on options
 export const useStrikeApi = async (options?: StrikeApiOptions) => {
-  console.log('options?.encryptedUserKey :', options?.encryptedUserKey)
   if (options?.encryptedUserKey) {
     return await strikeApiClient.withUserKey(options.encryptedUserKey)
   }
@@ -92,8 +91,9 @@ export const fetchProfileById = async (id: string, options?: StrikeApiOptions) =
 }
 
 export const createReceiveRequest = async (body: StrikeCreateReceiveRequest, options?: StrikeApiOptions) => {
+  console.log('🔑 createReceiveRequest with', options?.encryptedUserKey ? 'encrypted' : 'global', 'key')
   const api = await useStrikeApi(options)
-  const receiveRequest = await api<StrikeReceiveRequest>('/receive', {
+  const receiveRequest = await api<StrikeReceiveRequest>('/receive-requests', {
     method: 'POST',
     body,
   })

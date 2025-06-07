@@ -63,6 +63,7 @@ export default defineEventHandler(async (event) => {
     // Prepare Strike service data
     const strikeServiceData: StrikeServiceData = {
       strikeProfileId: accountProfile.id,
+      handle: handle,
       apiKey: decryptedClientApiKey,
     }
 
@@ -100,6 +101,7 @@ export default defineEventHandler(async (event) => {
               name: name || `Strike (${handle})`,
             },
             {
+              handle: handle,
               apiKey: decryptedClientApiKey,
             },
             tx
@@ -123,6 +125,7 @@ export default defineEventHandler(async (event) => {
           await tx.insert(strikeConnections).values({
             connectionId: newConnection.id,
             strikeProfileId: accountProfile.id,
+            handle: handle,
             apiKey: decryptedClientApiKey ? await encryptForStorage(decryptedClientApiKey) : null,
           })
 
@@ -149,6 +152,7 @@ export default defineEventHandler(async (event) => {
               name: name || `Strike (${handle})`,
             },
             {
+              handle: handle,
               apiKey: decryptedClientApiKey,
             },
             tx

@@ -1,4 +1,8 @@
+import { createError } from 'h3'
+import { decryptFromStorage } from '~~/server/utils/encryption'
+
 // Create a reusable factory for Strike API clients
+// TODO: move to server, use non-public config
 export const strikeApiClient = {
   // Cached global client instance
   _globalClient: null as ReturnType<typeof $fetch.create> | null,
@@ -25,17 +29,18 @@ export const strikeApiClient = {
   // Get or create a global client
   global() {
     if (!this._globalClient) {
-      const config = useRuntimeConfig()
-
-      // TODO: doesn't seem to work anymore
-      if (!config.strikeApiKey) {
+      // For server-side usage, we need to get the config differently
+      // This will be handled in the server API endpoints
+      const apiKey = process.env.NUXT_STRIKE_API_KEY
+      
+      if (!apiKey) {
         throw createError({
           statusCode: 500,
           message: 'Strike API key not configured',
         })
       }
 
-      this._globalClient = this._createBaseClient(this._createAuthorizationHeader(config.strikeApiKey))
+      this._globalClient = this._createBaseClient(this._createAuthorizationHeader(apiKey))
     }
 
     return this._globalClient
