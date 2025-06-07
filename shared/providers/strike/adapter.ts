@@ -35,7 +35,7 @@ export class StrikeAdapter implements PaymentAdapter {
   /**
    * Create an invoice using the Strike API
    */
-  async createInvoice(request: InvoiceRequest): Promise<Invoice> {
+  async createInvoice(request: InvoiceRequest | InvoiceRequestWithReceiver): Promise<Invoice> {
     const invoiceRequest: StrikeIssueInvoiceRequest = {
       correlationId: randomUUID(),
       description: request.description || 'Tipbit payment',
@@ -47,7 +47,7 @@ export class StrikeAdapter implements PaymentAdapter {
 
     // For requests with a receiver, use the appropriate API
     if ('receiver' in request) {
-      const requestWithReceiver = request as InvoiceRequestWithReceiver
+      const requestWithReceiver = request
       const invoice = await issueInvoiceForReceiver(requestWithReceiver.receiver, invoiceRequest)
       if (!invoice?.invoiceId) {
         throw createError({

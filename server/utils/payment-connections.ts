@@ -226,16 +226,20 @@ export const updatePaymentConnection = async (
       switch (connection.serviceType) {
         case 'strike': {
           const strikeData = serviceData as Partial<StrikeServiceData>
+          const updates: Record<string, any> = { updatedAt: new Date() }
+
           if (strikeData.apiKey !== undefined) {
             // Encrypt API key if provided
-            const encryptedApiKey = strikeData.apiKey ? await encryptForStorage(strikeData.apiKey) : null
-            await dbTx
-              .update(strikeConnections)
-              .set({
-                apiKey: encryptedApiKey,
-                updatedAt: new Date(),
-              })
-              .where(eq(strikeConnections.connectionId, connectionId))
+            updates.apiKey = strikeData.apiKey ? await encryptForStorage(strikeData.apiKey) : null
+          }
+
+          if (strikeData.handle !== undefined) {
+            updates.handle = strikeData.handle
+          }
+
+          if (Object.keys(updates).length > 1) {
+            // More than just updatedAt
+            await dbTx.update(strikeConnections).set(updates).where(eq(strikeConnections.connectionId, connectionId))
           }
           break
         }

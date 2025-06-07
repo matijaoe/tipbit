@@ -1,36 +1,37 @@
 <script lang="ts" setup>
 import { useQRCode } from '@vueuse/integrations/useQRCode'
-import { useToast } from '~/components/ui/toast'
-import type { StrikeCreateReceiveRequest, StrikeDecimalAmount } from '~~/shared/providers/strike/types'
 import { AnimatePresence, Motion } from 'motion-v'
+import { useToast } from '~/components/ui/toast'
 import { formatAmount, satsToBtc } from '~/utils/format'
+import type { StrikeCreateReceiveRequest, StrikeDecimalAmount } from '~~/shared/providers/strike/types'
 
 const props = defineProps<{
-  handle: string
+  profileHandle: string
   connectionId: string
 }>()
 
-// State for the amount
 const satsAmount = ref<number>()
 const formattedSatsAmount = computed(() => formatAmount(satsAmount.value ?? 0))
 
-// State for the receive request
 const receiveRequestId = ref<string>()
 const lnInvoice = ref<string>('')
 const onchainAddress = ref<string>('')
+
 const lnInvoiceQr = useQRCode(lnInvoice)
 const onchainAddressQr = useQRCode(onchainAddress)
+
 const { copy: copyInvoice, copied: invoiceCopied } = useClipboard({ source: lnInvoice })
 const { copy: copyAddress, copied: addressCopied } = useClipboard({ source: onchainAddress })
-const activeTab = ref('lightning')
 
-// Toggle for pending state
+const activeTab = ref('lightning')
+const activeQr = computed(() => {
+  return activeTab.value === 'lightning' ? lnInvoiceQr.value : onchainAddressQr.value
+})
+
 const [isRequestPending, setIsRequestPending] = useToggle(false)
 
-// Toast for notifications
 const { toast } = useToast()
 
-// Clear function
 const clearReceiveRequest = () => {
   receiveRequestId.value = undefined
   lnInvoice.value = ''
@@ -39,7 +40,6 @@ const clearReceiveRequest = () => {
   toast({ title: 'Ready for a new tip', variant: 'default' })
 }
 
-// Create request with amount
 const createRequest = async () => {
   if (!props.connectionId) {
     toast({ title: 'No Strike connection found', variant: 'destructive' })
@@ -79,7 +79,6 @@ const createRequest = async () => {
   }
 }
 
-// Create amountless request
 const createAmountlessRequest = async () => {
   if (!props.connectionId) {
     toast({ title: 'No Strike connection found', variant: 'destructive' })
@@ -113,26 +112,15 @@ const createAmountlessRequest = async () => {
   }
 }
 
-// Download the QR code for Lightning invoices
-const downloadQrCode = () => {
-  const qrSource = activeTab.value === 'lightning' ? lnInvoiceQr.value : onchainAddressQr.value
-  const filename = activeTab.value === 'lightning' ? 'invoice.png' : 'bitcoin-address.png'
-
-  const link = document.createElement('a')
-  link.href = qrSource
-  link.download = filename
-  link.click()
+const downloadQr = () => {
+  downloadQrCode(activeQr.value, 'invoice.png')
 }
 </script>
 
 <template>
   <div class="space-y-4">
     <Card v-if="!lnInvoice && !onchainAddress">
-      <CardHeader>
-        <CardTitle>Send Payment to {{ handle }}</CardTitle>
-        <CardDescription>Generate a Lightning or On-chain payment request</CardDescription>
-      </CardHeader>
-      <CardContent>
+      <CardContent class="pt-4">
         <div class="flex gap-2">
           <Input
             v-model.number="satsAmount"
@@ -141,7 +129,7 @@ const downloadQrCode = () => {
             full-width
             placeholder="Tip amount (sats)"
           />
-          <Button :disabled="isRequestPending || !satsAmount" @click="createRequest">Request</Button>
+          <Button :disabled="isRequestPending || !satsAmount" @click="createRequest">Tip</Button>
         </div>
 
         <Button variant="link" size="sm" class="-ml-3 mt-3" @click="createAmountlessRequest">
@@ -150,7 +138,7 @@ const downloadQrCode = () => {
       </CardContent>
     </Card>
 
-    <div v-if="lnInvoice || onchainAddress" class="rounded-lg bg-card pt-4">
+    <div v-else-if="lnInvoice || onchainAddress" class="rounded-lg bg-card pt-4">
       <Tabs v-model="activeTab" class="w-full">
         <TabsList class="mb-4 grid w-fit grid-cols-2">
           <TabsTrigger value="lightning"> ⚡ Lightning </TabsTrigger>
@@ -169,15 +157,13 @@ const downloadQrCode = () => {
               class="flex w-full max-w-xs flex-col gap-4"
             >
               <p v-if="satsAmount" class="text-xl">
-                Tip <strong>{{ formattedSatsAmount }} sats</strong> to {{ handle }}
+                Tip <strong>{{ formattedSatsAmount }} sats</strong> to {{ profileHandle }}
               </p>
 
-              <div v-if="lnInvoiceQr" id="invoice-qr" class="overflow-hidden rounded-xl">
-                <img :src="lnInvoiceQr" alt="Invoice QR Code" />
-              </div>
+              <img v-if="lnInvoiceQr" id="invoice-qr" class="rounded-xl" :src="lnInvoiceQr" alt="Invoice QR Code" />
 
               <div class="mt-auto flex flex-wrap justify-end gap-3">
-                <Button size="sm" variant="secondary" @click="downloadQrCode">Download QR</Button>
+                <Button size="sm" variant="secondary" @click="downloadQr">Download QR</Button>
                 <Button size="sm" @click="() => copyInvoice(lnInvoice)">
                   {{ invoiceCopied ? 'Copied!!! 😎' : 'Copy to clipboard' }}
                 </Button>
@@ -195,7 +181,7 @@ const downloadQrCode = () => {
               class="flex w-full max-w-xs flex-col items-start gap-4"
             >
               <p v-if="satsAmount" class="text-xl">
-                Tip <strong>{{ formattedSatsAmount }} sats</strong> to {{ handle }}
+                Tip <strong>{{ formattedSatsAmount }} sats</strong> to {{ profileHandle }}
               </p>
 
               <div v-if="onchainAddressQr" id="onchain-qr" class="overflow-hidden rounded-xl">
@@ -205,7 +191,7 @@ const downloadQrCode = () => {
               <p class="break-all">{{ onchainAddress }}</p>
 
               <div class="mt-auto flex flex-wrap justify-end gap-3">
-                <Button size="sm" variant="secondary" @click="downloadQrCode">Download QR</Button>
+                <Button size="sm" variant="secondary" @click="downloadQr">Download QR</Button>
                 <Button size="sm" @click="() => copyAddress(onchainAddress)">
                   {{ addressCopied ? 'Copied!!! 😎' : 'Copy to clipboard' }}
                 </Button>

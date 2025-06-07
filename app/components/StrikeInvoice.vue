@@ -1,37 +1,33 @@
 <script lang="ts" setup>
 import { useQRCode } from '@vueuse/integrations/useQRCode'
+import { satsToBtc } from '~/utils/format'
 import type { Invoice, InvoiceRequestWithReceiver } from '~~/shared/payments/types'
 import type { StrikeAccountProfile, StrikeInvoice } from '~~/shared/providers/strike/types'
-import { getInvoices } from '~~/shared/providers/strike/api'
 import { useToast } from './ui/toast'
-import { satsToBtc, formatAmount } from '~/utils/format'
 
 const props = defineProps<{
-  handle?: StrikeAccountProfile['handle']
+  strikeHandle?: StrikeAccountProfile['handle']
 }>()
 
 const satsAmount = ref<number>()
-const formattedSatsAmount = computed(() => formatAmount(satsAmount.value ?? 0))
 
 const invoiceId = ref<Invoice['invoiceId']>()
 const receiveRequestId = ref<string>()
 const lnInvoice = ref<Invoice['lnInvoice']>('')
-const onchainAddress = ref<string>('')
+
 const lnInvoiceQr = useQRCode(lnInvoice)
-const onchainAddressQr = useQRCode(onchainAddress)
+
 const { copy: copyInvoice, copied: invoiceCopied } = useClipboard({ source: lnInvoice })
-const activeTab = ref('lightning')
 
 const clearInvoice = () => {
   invoiceId.value = undefined
   receiveRequestId.value = undefined
   lnInvoice.value = ''
-  onchainAddress.value = ''
   satsAmount.value = undefined
 }
 
 watchEffect(() => {
-  if (!props.handle) {
+  if (!props.strikeHandle) {
     clearInvoice()
   }
 })
@@ -53,9 +49,9 @@ const handleCreatePayment = async () => {
     return
   }
 
-  if (!props.handle) {
+  if (!props.strikeHandle) {
     toast({
-      title: 'Profile handle not found',
+      title: 'Strike handle not found',
       variant: 'default',
     })
     setIsInvoicePending(false)
@@ -63,7 +59,6 @@ const handleCreatePayment = async () => {
   }
 
   try {
-    // Generate invoice (for users without API keys)
     const invoice = await $fetch<Invoice>('/api/invoices', {
       method: 'POST',
       body: {
@@ -72,15 +67,13 @@ const handleCreatePayment = async () => {
           amount: String(satsToBtc(sats)),
           currency: 'BTC',
         },
-        description: `Tip to ${props.handle}`,
-        receiver: props.handle,
+        description: `Tip to ${props.strikeHandle}`,
+        receiver: props.strikeHandle,
       } satisfies InvoiceRequestWithReceiver,
     })
 
     invoiceId.value = invoice.invoiceId
     lnInvoice.value = invoice.lnInvoice
-    // No onchain for regular invoices
-    onchainAddress.value = ''
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Failed to create payment'
     console.error('Failed to create payment:', error)
@@ -122,56 +115,26 @@ const cancelPendingInvoice = async () => {
   }
 }
 
-const hasPaymentData = computed(() => !!(lnInvoice.value || onchainAddress.value))
-
-const downloadQrCode = () => {
-  const qrSource = activeTab.value === 'lightning' ? lnInvoiceQr.value : onchainAddressQr.value
-  const filename = activeTab.value === 'lightning' ? 'invoice.png' : 'bitcoin-address.png'
-
-  const link = document.createElement('a')
-  link.href = qrSource
-  link.download = filename
-  link.click()
-}
-
-const invoices = ref<StrikeInvoice[]>([])
-
-const _getAccountInvoices = async () => {
-  const fetchedInvoices = await getInvoices()
-  console.log('fetchedInvoices', fetchedInvoices)
-  invoices.value = fetchedInvoices
+const downloadQr = () => {
+  downloadQrCode(lnInvoiceQr.value, 'invoice.png')
 }
 </script>
 
 <template>
-  <div v-if="handle" class="space-y-4">
-    <!-- Amount input form -->
-    <Card v-if="!hasPaymentData">
-      <CardHeader>
-        <CardTitle>Send Payment to {{ handle }}</CardTitle>
-        <CardDescription>Enter amount to generate Lightning payment</CardDescription>
-      </CardHeader>
-      <CardContent>
+  <div v-if="strikeHandle" class="space-y-4">
+    <Card v-if="!lnInvoice">
+      <CardContent class="pt-4">
         <form class="flex gap-2" @submit.prevent="handleCreatePayment">
-          <Input
-            v-model.number="satsAmount"
-            full-width
-            type="number"
-            placeholder="Tip amount (sats)"
-            min="1"
-            :disabled="_isInvoicePending"
-          />
+          <Input v-model.number="satsAmount" full-width type="number" placeholder="Tip amount (sats)" min="1" />
           <Button :disabled="!satsAmount || _isInvoicePending" type="submit"> Tip </Button>
         </form>
       </CardContent>
     </Card>
 
-    <!-- Payment display -->
-    <div v-if="hasPaymentData" class="space-y-4">
+    <div v-else-if="lnInvoice" class="space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle>Send {{ formattedSatsAmount }} to {{ handle }}</CardTitle>
-          <CardDescription>Lightning Network payment</CardDescription>
+          <CardDescription>Generate an invoice</CardDescription>
         </CardHeader>
         <CardContent>
           <div class="space-y-4">
@@ -179,7 +142,7 @@ const _getAccountInvoices = async () => {
               <img :src="lnInvoiceQr" alt="Lightning Invoice QR Code" />
             </div>
             <div class="flex flex-wrap gap-3">
-              <Button size="sm" variant="secondary" @click="downloadQrCode">Download QR</Button>
+              <Button size="sm" variant="secondary" @click="downloadQr">Download QR</Button>
               <Button size="sm" @click="() => copyInvoice(lnInvoice)">
                 {{ invoiceCopied ? 'Copied! 😎' : 'Copy Invoice' }}
               </Button>
@@ -188,7 +151,6 @@ const _getAccountInvoices = async () => {
         </CardContent>
       </Card>
 
-      <!-- Action buttons -->
       <div class="flex justify-center gap-3">
         <Button variant="outline" @click="clearInvoice">Create New Payment</Button>
         <Button v-if="invoiceId" size="sm" variant="destructive" @click="cancelPendingInvoice"> Cancel Invoice </Button>

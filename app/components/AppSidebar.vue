@@ -28,7 +28,6 @@ const menuItems = computed<MenuItem[]>(() => [
   },
 ])
 
-
 const adminItems: MenuItem[] = [
   {
     title: 'Users',
@@ -92,7 +91,6 @@ const adminItems: MenuItem[] = [
           </SidebarMenu>
         </SidebarGroupContent>
       </SidebarGroup>
-
 
       <SidebarGroup v-if="user?.role === 'ADMIN'">
         <SidebarGroupLabel>Admin</SidebarGroupLabel>
