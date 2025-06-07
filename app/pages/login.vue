@@ -26,11 +26,24 @@ whenever(ready, () => {
         <CardTitle>Login</CardTitle>
       </CardHeader>
       <CardContent>
-        <div class="flex flex-col gap-2">
-          <Button :is-loading="loadingProvider === 'google'" @click="handleLogin('google')"> Login with Google </Button>
-          <Button :is-loading="loadingProvider === 'github'" @click="handleLogin('github')"> Login with GitHub </Button>
-          <Button :is-loading="loadingProvider === 'x'" @click="handleLogin('x')"> Login with X </Button>
-          <Button :is-loading="loadingProvider === 'twitch'" @click="handleLogin('twitch')"> Login with Twitch </Button>
+        <div class="flex flex-col gap-3">
+          <PasskeyAuth mode="login" />
+          
+          <div class="relative">
+            <div class="absolute inset-0 flex items-center">
+              <span class="w-full border-t" />
+            </div>
+            <div class="relative flex justify-center text-xs uppercase">
+              <span class="bg-background px-2 text-muted-foreground">Or continue with</span>
+            </div>
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <Button :is-loading="loadingProvider === 'google'" @click="handleLogin('google')"> Login with Google </Button>
+            <Button :is-loading="loadingProvider === 'github'" @click="handleLogin('github')"> Login with GitHub </Button>
+            <Button :is-loading="loadingProvider === 'x'" @click="handleLogin('x')"> Login with X </Button>
+            <Button :is-loading="loadingProvider === 'twitch'" @click="handleLogin('twitch')"> Login with Twitch </Button>
+          </div>
         </div>
       </CardContent>
     </Card>

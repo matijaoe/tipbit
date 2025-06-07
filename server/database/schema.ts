@@ -154,6 +154,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   profiles: many(profiles),
   authConnections: many(authConnections),
   paymentConnections: many(paymentConnections),
+  credentials: many(credentials),
 }))
 
 export const profilesRelations = relations(profiles, ({ one, many }) => ({
@@ -217,9 +218,31 @@ export const profilePaymentPreferencesRelations = relations(profilePaymentPrefer
   }),
 }))
 
+// WebAuthn credentials table for passkey authentication
+export const credentials = sqliteTable('credentials', {
+  id: text('id').primaryKey(),
+  userId: text('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  publicKey: text('public_key').notNull(),
+  counter: integer('counter').notNull(),
+  backedUp: integer('backed_up', { mode: 'boolean' }).notNull(),
+  transports: text('transports').notNull(), // JSON string array
+  createdAt: integer('created_at', { mode: 'timestamp' })
+    .notNull()
+    .$defaultFn(() => new Date()),
+})
+
 export const authConnectionsRelations = relations(authConnections, ({ one }) => ({
   user: one(users, {
     fields: [authConnections.userId],
+    references: [users.id],
+  }),
+}))
+
+export const credentialsRelations = relations(credentials, ({ one }) => ({
+  user: one(users, {
+    fields: [credentials.userId],
     references: [users.id],
   }),
 }))
