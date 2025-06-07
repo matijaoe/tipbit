@@ -63,6 +63,7 @@ export default defineEventHandler(async (event) => {
     // Prepare Strike service data
     const strikeServiceData: StrikeServiceData = {
       strikeProfileId: accountProfile.id,
+      handle: handle,
       apiKey: decryptedClientApiKey,
     }
 

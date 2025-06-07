@@ -84,6 +84,7 @@ export const strikeConnections = sqliteTable('strike_connections', {
     .unique()
     .references(() => paymentConnections.id, { onDelete: 'cascade' }),
   strikeProfileId: text('strike_profile_id').notNull(),
+  handle: text('handle'), // Strike handle/username
   apiKey: text('api_key'), // Optional API key
   createdAt: integer('created_at', { mode: 'timestamp' })
     .notNull()

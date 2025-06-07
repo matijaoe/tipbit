@@ -1,0 +1,1 @@
+ALTER TABLE `strike_connections` ADD `handle` text NOT NULL;

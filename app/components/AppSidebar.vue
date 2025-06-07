@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { FileText, Globe, Inbox, LayoutDashboard, Users } from 'lucide-vue-next'
+import { Globe, LayoutDashboard, Users } from 'lucide-vue-next'
 import type { RouteLocationRaw } from 'vue-router'
 import AppSidebarUserSwitcher from './AppSidebarUserSwitcher.vue'
 
@@ -28,18 +28,6 @@ const menuItems = computed<MenuItem[]>(() => [
   },
 ])
 
-const invoiceItems: MenuItem[] = [
-  {
-    title: 'Invoice',
-    url: '/dashboard/invoice',
-    icon: FileText,
-  },
-  {
-    title: 'Receive Requests',
-    url: '/dashboard/receive-request',
-    icon: Inbox,
-  },
-]
 
 const adminItems: MenuItem[] = [
   {
@@ -105,21 +93,6 @@ const adminItems: MenuItem[] = [
         </SidebarGroupContent>
       </SidebarGroup>
 
-      <SidebarGroup>
-        <SidebarGroupLabel>Invoices</SidebarGroupLabel>
-        <SidebarGroupContent>
-          <SidebarMenu>
-            <SidebarMenuItem v-for="item in invoiceItems" :key="item.title">
-              <SidebarMenuButton as-child>
-                <NuxtLink :to="item.url">
-                  <component :is="item.icon" />
-                  <span>{{ item.title }}</span>
-                </NuxtLink>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarGroupContent>
-      </SidebarGroup>
 
       <SidebarGroup v-if="user?.role === 'ADMIN'">
         <SidebarGroupLabel>Admin</SidebarGroupLabel>

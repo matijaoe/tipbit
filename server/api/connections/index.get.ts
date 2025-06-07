@@ -8,6 +8,8 @@ import { getUserConnections } from '~~/server/utils'
 export default defineEventHandler(async (event) => {
   const { user } = await requireUserSession(event)
 
+  console.log('user', user)
+
   const connections = await getUserConnections(user.id)
 
   return connections

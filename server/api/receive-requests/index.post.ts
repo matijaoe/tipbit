@@ -1,4 +1,5 @@
 import { and, eq } from 'drizzle-orm'
+import { createError, defineEventHandler, readBody } from 'h3'
 import { createReceiveRequest } from '~~/shared/providers/strike/api'
 import type { StrikeCreateReceiveRequest, StrikeReceiveRequest } from '~~/shared/providers/strike/types'
 
@@ -6,8 +7,7 @@ export default defineEventHandler<{
   body: StrikeCreateReceiveRequest & { connectionId: string }
   response: StrikeReceiveRequest
 }>(async (event) => {
-  const { user } = await requireUserSession(event)
-
+  // No user session required - this is for public payments
   const body = await readBody(event)
   const { connectionId, ...receiveRequestData } = body
 
@@ -18,10 +18,10 @@ export default defineEventHandler<{
     })
   }
 
-  // Get the Strike connection with encrypted API key
+  // Get the Strike connection with encrypted API key (no user restriction for public payments)
   const db = useDB()
   const connection = await db.query.paymentConnections.findFirst({
-    where: (pc) => and(eq(pc.id, connectionId), eq(pc.userId, user.id), eq(pc.serviceType, 'strike')),
+    where: (pc) => and(eq(pc.id, connectionId), eq(pc.serviceType, 'strike')),
     with: {
       strikeConnection: true,
     },

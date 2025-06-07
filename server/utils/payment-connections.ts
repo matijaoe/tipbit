@@ -15,6 +15,7 @@ import { encryptForStorage } from './encryption'
 // TODO: Can we infer the type from the schema and pick specific types we need, or omit the ones we don't need?
 export interface StrikeServiceData {
   strikeProfileId: string
+  handle: string
   apiKey?: string | null
 }
 
@@ -328,6 +329,7 @@ export const createPaymentConnection = async (
         await dbTx.insert(strikeConnections).values({
           connectionId: connection.id,
           strikeProfileId: strikeData.strikeProfileId,
+          handle: strikeData.handle,
           apiKey: encryptedApiKey,
         })
         break

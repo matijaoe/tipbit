@@ -1,3 +1,4 @@
+import { createError, defineEventHandler, readBody } from 'h3'
 import type { Invoice, InvoiceRequestWithReceiver } from '~~/shared/payments/types'
 import { StrikeAdapter } from '~~/shared/providers/strike/adapter'
 
@@ -5,8 +6,6 @@ export default defineEventHandler<{
   body: InvoiceRequestWithReceiver
   response: Invoice
 }>(async (event) => {
-  await requireUserSession(event)
-
   // TODO: validate body
   const body = await readBody(event)
 

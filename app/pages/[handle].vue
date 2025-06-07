@@ -25,6 +25,8 @@ type ConnectionPreference = {
     name?: string
     strikeConnection?: {
       strikeProfileId: string
+      hasApiKey: boolean
+      handle: string
     }
   }
 }
@@ -36,7 +38,7 @@ if (!profileData.value) {
 
 // TODO: fetch only default (top) connection
 // Only fetch connections for the existing profile
-const { data: preferences, status: preferencesStatus } = useLazyFetch<ConnectionPreference[]>(
+const { data: connections, status: connectionsStatus } = useLazyFetch<ConnectionPreference[]>(
   `/api/profiles/${profileData.value.id}/connections`,
   {
     key: `connections:${handle.value}`,
@@ -44,22 +46,52 @@ const { data: preferences, status: preferencesStatus } = useLazyFetch<Connection
   }
 )
 
-const isPreferencesLoading = computed(() => preferencesStatus.value === 'pending')
+const isConnectionsLoading = computed(() => connectionsStatus.value === 'pending')
 
 // Find the first Strike connection (if any)
 const strikeConnection = computed(() => {
-  if (!preferences.value?.length) return undefined
+  if (!connections.value?.length) return undefined
 
-  return preferences.value.find(
+  return connections.value.find(
     (pref) => pref.connection?.serviceType === 'strike' && pref.connection?.strikeConnection
   )
 })
 
-// Get the Strike handle for the invoice component
+// Get the Strike handle for the components
 const strikeHandle = computed(() => {
   const connection = strikeConnection.value
-  if (!connection?.connection?.name) return undefined
-  return connection.connection.name
+  // Try to get the handle from the connection first (new connections)
+  if (connection?.connection?.strikeConnection?.handle) {
+    return connection.connection.strikeConnection.handle
+  }
+
+  // TODO: dont do this
+  // For legacy connections without handle, extract it from the name
+  if (connection?.connection?.name) {
+    // Extract handle from format "Strike (handle)"
+    const match = connection.connection.name.match(/Strike \((.+)\)/)
+    if (match) {
+      return match[1]
+    }
+  }
+
+  return undefined
+})
+
+// Check if Strike connection has API key for receive requests
+const hasStrikeApiKey = computed(() => {
+  return strikeConnection.value?.connection?.strikeConnection?.hasApiKey ?? false
+})
+
+// Get connection ID for receive requests
+const strikeConnectionId = computed(() => {
+  return strikeConnection.value?.id
+})
+
+watchEffect(() => {
+  console.log('profileData', profileData.value)
+  console.log('preferences', connections.value)
+  console.log('strikeConnection', strikeConnection.value)
 })
 </script>
 
@@ -77,10 +109,10 @@ const strikeHandle = computed(() => {
       </div>
     </div>
 
-    <div v-if="preferences?.length" class="mt-6">
+    <div v-if="connections?.length" class="mt-6">
       <h2 class="text-lg font-medium">Payment Methods</h2>
       <div class="mt-2 space-y-2">
-        <div v-for="pref in preferences" :key="pref.id" class="rounded border p-3">
+        <div v-for="pref in connections" :key="pref.id" class="rounded border p-3">
           <div v-if="pref.connection?.serviceType === 'strike'">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">
@@ -107,7 +139,7 @@ const strikeHandle = computed(() => {
       </div>
     </div>
 
-    <div v-else-if="isPreferencesLoading" class="mt-6">
+    <div v-else-if="isConnectionsLoading" class="mt-6">
       <h2 class="text-lg font-medium">Payment Methods</h2>
       <div class="mt-2 space-y-2">
         <div v-for="i in 2" :key="i" class="animate-pulse rounded border p-3">
@@ -121,17 +153,23 @@ const strikeHandle = computed(() => {
       </div>
     </div>
 
-    <div v-else-if="!isPreferencesLoading" class="mt-6">
+    <div v-else-if="!isConnectionsLoading" class="mt-6">
       <h2 class="text-lg font-medium">Payment Methods</h2>
       <div class="mt-2">
         <p class="text-muted-foreground">No payment methods connected</p>
       </div>
     </div>
 
-    <StrikeInvoice v-if="strikeHandle" class="mt-6" :handle="strikeHandle" />
+    <Payment
+      v-if="strikeHandle"
+      class="mt-6"
+      :handle="strikeHandle"
+      :connection-id="strikeConnectionId"
+      :has-api-key="hasStrikeApiKey"
+    />
 
-    <!-- Loading state for Strike Invoice -->
-    <div v-else-if="isPreferencesLoading" class="mt-6 animate-pulse">
+    <!-- Loading state for Payment -->
+    <div v-else-if="isConnectionsLoading" class="mt-6 animate-pulse">
       <div class="h-40 rounded-md bg-muted"></div>
     </div>
 
@@ -146,7 +184,7 @@ const strikeHandle = computed(() => {
         <Card class="mt-4 overflow-hidden">
           <CardContent class="pt-4">
             <pre class="no-scrollbar overflow-auto">{{ profileData }}</pre>
-            <pre v-if="preferences" class="no-scrollbar mt-4 overflow-auto">{{ preferences }}</pre>
+            <pre v-if="connections" class="no-scrollbar mt-4 overflow-auto">{{ connections }}</pre>
           </CardContent>
         </Card>
       </CollapsibleContent>

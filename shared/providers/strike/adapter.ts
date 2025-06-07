@@ -2,10 +2,11 @@
  * Strike payment adapter implementation
  */
 import { randomUUID } from 'uncrypto'
+import { createError } from 'h3'
 import type { PaymentAdapter } from '~~/shared/payments/adapters'
 import type { Invoice, InvoiceRequest, InvoiceRequestWithReceiver, ISO8601DateTime } from '~~/shared/payments/types'
 import { createQuote, issueInvoice, issueInvoiceForReceiver, getInvoice, cancelInvoice } from './api'
-import type { StrikeInvoiceState, StrikeIssueInvoiceRequest, StrikeCreateReceiveRequest, StrikeReceiveRequest } from './types'
+import type { StrikeInvoiceState, StrikeIssueInvoiceRequest } from './types'
 
 /**
  * Map Strike invoice state to our internal invoice status
@@ -166,14 +167,5 @@ export class StrikeAdapter implements PaymentAdapter {
   async cancelInvoice(invoiceId: string): Promise<boolean> {
     const result = await cancelInvoice(invoiceId)
     return Boolean(result.created)
-  }
-
-  /**
-   * Create a receive request using the Strike API with encrypted API key
-   * This method should be called from the server-side API endpoint
-   */
-  async createReceiveRequest(_request: StrikeCreateReceiveRequest, _connectionId: string): Promise<StrikeReceiveRequest> {
-    // This will be handled in the server API endpoint which has access to the DB and session
-    throw new Error('createReceiveRequest should be called from server-side API endpoint')
   }
 }
