@@ -48,23 +48,33 @@ const { data: connections, status: connectionsStatus } = useLazyFetch<Connection
 
 const isConnectionsLoading = computed(() => connectionsStatus.value === 'pending')
 
-// Find the first Strike connection (if any)
-const strikeConnection = computed(() => {
+// Find the first active payment connection
+const activeConnection = computed(() => {
   if (!connections.value?.length) {
     return undefined
   }
 
-  return connections.value.find(
-    (pref) => pref.connection?.serviceType === 'strike' && pref.connection?.strikeConnection
-  )
+  return connections.value[0] // Just use the first connection for now
 })
 
-const strikeHandle = computed(() => {
-  return strikeConnection.value?.connection?.strikeConnection?.handle ?? undefined
-})
+// Extract connection-specific data based on service type
+const connectionData = computed(() => {
+  if (!activeConnection.value?.connection) {
+    return null
+  }
 
-const hasStrikeApiKey = computed(() => {
-  return strikeConnection.value?.connection?.strikeConnection?.hasApiKey ?? false
+  const { connection } = activeConnection.value
+
+  // For now, only handle Strike connections
+  if (connection.serviceType === 'strike' && connection.strikeConnection) {
+    return {
+      serviceType: 'strike' as const,
+      handle: connection.strikeConnection.handle,
+      hasApiKey: connection.strikeConnection.hasApiKey,
+    }
+  }
+
+  return null
 })
 </script>
 
@@ -86,26 +96,27 @@ const hasStrikeApiKey = computed(() => {
       <h2 class="text-lg font-medium">Payment connections</h2>
       <div class="mt-2 space-y-2">
         <div v-for="pref in connections" :key="pref.id" class="rounded-lg border p-3">
-          <div v-if="pref.connection?.serviceType === 'strike' && pref.connection.strikeConnection">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <span>{{ pref.connection.name }}</span>
-              </div>
-              <Badge v-if="pref.connection.strikeConnection.hasApiKey" variant="default">Receive request</Badge>
-              <Badge v-else variant="outline">Invoice</Badge>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span>{{ pref.connection?.name ?? pref.connection?.serviceType }}</span>
             </div>
+            <Badge
+              v-if="pref.connection"
+              :variant="pref.connection.strikeConnection?.hasApiKey ? 'default' : 'outline'"
+            >
+              {{ pref.connection.strikeConnection?.hasApiKey ? 'Receive request' : 'Invoice' }}
+            </Badge>
           </div>
         </div>
       </div>
     </div>
 
     <PaymentInvoice
-      v-if="strikeConnection"
+      v-if="connectionData"
       class="mt-6"
       :profile-handle="profileData.handle"
-      :strike-handle="strikeHandle"
-      :connection-id="strikeConnection.id"
-      :has-api-key="hasStrikeApiKey"
+      :connection-data="connectionData"
+      :connection-id="activeConnection?.id"
     />
 
     <div v-else-if="isConnectionsLoading" class="mt-6 animate-pulse">
