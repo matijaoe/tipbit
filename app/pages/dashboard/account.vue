@@ -9,7 +9,6 @@ definePageMeta({
 const { user } = useCurrentUser()
 
 const authConnections = computed(() => user.value?.authConnections)
-const profiles = computed(() => user.value?.profiles ?? [])
 
 function getProviderName(provider: AuthProvider) {
   const names = {
@@ -40,8 +39,22 @@ function getProviderName(provider: AuthProvider) {
 
           <div class="flex flex-1 flex-col gap-4">
             <div>
+              <h3 class="text-sm font-medium">Identifier</h3>
+              <p>{{ user?.identifier }}</p>
+            </div>
+            <div>
+              <h3 class="text-sm font-medium">Username</h3>
+              <p class="">@{{ user?.username }}</p>
+            </div>
+
+            <div>
+              <h3 class="text-sm font-medium">Display Name</h3>
+              <p class="">{{ user?.displayName }}</p>
+            </div>
+
+            <div>
               <h3 class="text-sm font-medium">Account ID</h3>
-              <p class="">{{ user?.id }}</p>
+              <p class="text-xs text-muted-foreground">{{ user?.id }}</p>
             </div>
 
             <div>
@@ -62,11 +75,14 @@ function getProviderName(provider: AuthProvider) {
               </p>
             </div>
 
-            <div v-if="authConnections">
+            <div>
               <h3 class="text-sm font-medium">Auth</h3>
               <div class="mt-1 flex flex-wrap">
                 <div v-for="connection in authConnections" :key="connection.id">
                   <Badge variant="secondary">{{ getProviderName(connection.provider) }}</Badge>
+                </div>
+                <div v-if="!authConnections?.length">
+                  <Badge variant="secondary">Passkey</Badge>
                 </div>
               </div>
             </div>
@@ -75,42 +91,54 @@ function getProviderName(provider: AuthProvider) {
       </CardContent>
     </Card>
 
-    <!-- Profiles Section -->
-    <div>
-      <h3 class="text-lg font-medium">Profiles</h3>
-      <div class="mt-2 flex flex-col gap-4">
-        <!-- Profile Cards -->
-        <Card v-for="profile in profiles" :key="profile.id">
-          <CardContent class="p-4">
-            <div class="flex items-start gap-3">
-              <!-- Profile Avatar -->
-              <Avatar size="base">
-                <AvatarImage
-                  :src="profile.avatarUrl || user?.avatarUrl || '/default-avatar.png'"
-                  :alt="`${profile.displayName}'s avatar`"
-                />
-                <AvatarFallback>
-                  {{ profile.displayName.charAt(0).toUpperCase() }}
-                </AvatarFallback>
-              </Avatar>
+    <!-- Public Profile Section -->
+    <Card>
+      <CardHeader>
+        <CardTitle>Public Profile</CardTitle>
+        <CardDescription> Your public profile information that others can see. </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div class="flex items-start gap-4">
+          <Avatar size="xl" shape="square">
+            <AvatarImage
+              :src="user?.avatarUrl || '/default-avatar.png'"
+              :alt="`${user?.displayName || user?.username}'s avatar`"
+            />
+            <AvatarFallback>
+              {{ (user?.displayName || user?.username || '?').charAt(0).toUpperCase() }}
+            </AvatarFallback>
+          </Avatar>
 
-              <div class="flex-1">
-                <div class="flex w-full items-center justify-between">
-                  <h3 class="text-base font-bold">{{ profile.displayName }}</h3>
-                  <Badge v-if="profile.isPrimary"> Primary </Badge>
-                </div>
-                <NuxtLink
-                  :to="{ name: 'handle', params: { handle: profile.handle } }"
-                  class="flex items-center gap-1 text-muted-foreground hover:text-foreground"
-                >
-                  <p class="text-sm">@{{ profile.handle }}</p>
-                  <ArrowUpRight class="size-4" />
-                </NuxtLink>
-              </div>
+          <div class="flex-1">
+            <div class="mb-3">
+              <h3 class="text-lg font-semibold">{{ user?.displayName || user?.username }}</h3>
+              <NuxtLink
+                :to="`/${user?.username}`"
+                class="flex items-center gap-1 text-muted-foreground hover:text-foreground"
+              >
+                <p class="text-sm">@{{ user?.username }}</p>
+                <ArrowUpRight class="size-4" />
+              </NuxtLink>
             </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+
+            <div class="space-y-2 text-sm">
+              <div>
+                <span class="font-medium">Visibility:</span>
+                <Badge :variant="user?.isPublic ? 'default' : 'secondary'" class="ml-2">
+                  {{ user?.isPublic ? 'Public' : 'Private' }}
+                </Badge>
+              </div>
+              <p class="text-muted-foreground">
+                {{
+                  user?.isPublic
+                    ? 'Your profile is visible to everyone.'
+                    : 'Your profile is private and only visible to you.'
+                }}
+              </p>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   </div>
 </template>

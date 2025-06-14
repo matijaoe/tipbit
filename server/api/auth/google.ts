@@ -8,10 +8,8 @@ export default defineOAuthGoogleEventHandler({
         id: googleUser.sub,
         provider: 'google',
         identifier: googleUser.email,
-        identifierType: 'email',
         displayName: googleUser.name,
         avatarUrl: googleUser.picture,
-        handle: googleUser.email.split('@')[0],
       })
     } catch (error) {
       console.error('Google auth error:', error)

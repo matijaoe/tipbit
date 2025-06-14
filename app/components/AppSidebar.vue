@@ -5,9 +5,8 @@ import AppSidebarUserSwitcher from './AppSidebarUserSwitcher.vue'
 
 const { user } = useUserSession()
 const { user: currentUser } = useCurrentUser()
-const profile = computed(() => currentUser.value?.profiles?.[0])
 
-const handle = computed(() => profile.value?.handle ?? '')
+const username = computed(() => currentUser.value?.username ?? '')
 
 type MenuItem = {
   title: string
@@ -63,11 +62,12 @@ const adminItems: MenuItem[] = [
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton as-child>
-                <NuxtLink :to="`/${handle}`">
+                <NuxtLink :to="currentUser?.isPublic ? `/${username}` : '/dashboard/settings'">
                   <Globe />
                   <div class="leading flex w-full items-center justify-between gap-2">
                     <span>Public page</span>
-                    <Badge size="sm" variant="secondary">external</Badge>
+                    <Badge v-if="!currentUser?.isPublic" size="sm" variant="destructive">disabled</Badge>
+                    <Badge v-else size="sm" variant="secondary">external</Badge>
                   </div>
                 </NuxtLink>
               </SidebarMenuButton>

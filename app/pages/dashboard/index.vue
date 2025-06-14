@@ -6,7 +6,7 @@ definePageMeta({
 })
 
 const identifier = computed(() => user.value?.identifier)
-const isEmail = computed(() => user.value?.identifierType === 'email')
+const isEmail = computed(() => user.value?.identifier.includes('@'))
 </script>
 
 <template>

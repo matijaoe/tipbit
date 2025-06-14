@@ -12,7 +12,7 @@ export const avatarVariant = cva(
         xs: 'size-6 text-xs',
         sm: 'size-8 text-xs',
         base: 'size-12 text-lg',
-        lg: 'size-18 text-2xl',
+        lg: 'size-16 text-2xl',
         xl: 'size-24 text-3xl',
       },
       shape: {

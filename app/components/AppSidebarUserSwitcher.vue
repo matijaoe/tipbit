@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { BadgeCheck, ChevronsUpDown, LogOut } from 'lucide-vue-next'
+import { BadgeCheck, ChevronsUpDown, LogOut, Settings } from 'lucide-vue-next'
 import { useSidebar } from '~/components/ui/sidebar/utils'
 
 const { user } = useCurrentUser()
@@ -12,11 +12,9 @@ if (!user.value) {
   })
 }
 
-const { primaryProfile } = useCurrentUser()
-
-const handle = computed(() => `@${primaryProfile.value?.handle}`)
-const displayName = computed(() => primaryProfile.value?.displayName ?? '')
-const avatarUrl = computed(() => primaryProfile.value?.avatarUrl ?? user.value?.avatarUrl ?? '')
+const displayedUsername = computed(() => `@${user.value?.username}`)
+const displayName = computed(() => user.value?.displayName ?? '')
+const avatarUrl = computed(() => user.value?.avatarUrl ?? '')
 
 const { isMobile } = useSidebar()
 
@@ -35,16 +33,14 @@ const handleLogout = async () => {
             class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
           >
             <Avatar size="sm" shape="square">
-              <AvatarImage :src="avatarUrl" :alt="handle" />
+              <AvatarImage :src="avatarUrl" :alt="displayedUsername" />
               <AvatarFallback>
                 {{ displayName.charAt(0).toUpperCase() }}
               </AvatarFallback>
             </Avatar>
             <div class="grid flex-1 text-left text-sm leading-tight">
               <span class="truncate font-semibold">{{ displayName }}</span>
-              <span class="truncate text-xs text-muted-foreground">
-                {{ handle }}
-              </span>
+              <span class="truncate text-xs text-muted-foreground"> {{ displayedUsername }} </span>
               <!-- <span class="truncate text-xs">
                 <Badge size="xs" :variant="role === 'ADMIN' ? 'default' : 'secondary'">{{ role }}</Badge>
               </span> -->
@@ -61,7 +57,7 @@ const handleLogout = async () => {
           <DropdownMenuLabel class="p-0 font-normal">
             <div class="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
               <Avatar size="sm" shape="square">
-                <AvatarImage :src="avatarUrl" :alt="handle" />
+                <AvatarImage :src="avatarUrl" :alt="displayedUsername" />
                 <AvatarFallback>
                   {{ displayName.charAt(0).toUpperCase() }}
                 </AvatarFallback>
@@ -69,7 +65,7 @@ const handleLogout = async () => {
               <div class="grid flex-1 text-left text-sm leading-tight">
                 <span class="truncate font-semibold">{{ displayName }}</span>
                 <span class="truncate text-xs text-muted-foreground">
-                  {{ handle }}
+                  {{ displayedUsername }}
                 </span>
                 <!-- <span class="truncate text-xs">
                   <Badge size="xs" :variant="role === 'ADMIN' ? 'default' : 'secondary'">{{ role }}</Badge>
@@ -84,6 +80,10 @@ const handleLogout = async () => {
               Account
             </DropdownMenuItem>
           </DropdownMenuGroup>
+          <DropdownMenuItem @click="navigateTo('/dashboard/settings')">
+            <Settings class="size-4" />
+            Settings
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem @click="handleLogout">
             <LogOut class="size-4" />

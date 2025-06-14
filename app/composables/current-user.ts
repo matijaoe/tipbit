@@ -1,29 +1,26 @@
 import type { AuthConnection } from '~~/server/utils/db'
 
-type UserWithProfiles = User & { profiles: Profile[]; authConnections: AuthConnection[] }
+type UserWithConnections = User & { authConnections: AuthConnection[] }
 
 export const useCurrentUser = () => {
   const { user: sessionUser } = useUserSession()
 
-  const { data: user, clear: clearCurrentUser } = useFetch<UserWithProfiles>('/api/me', {
+  const { data: user, clear: clearCurrentUser } = useFetch<UserWithConnections>('/api/me', {
     key: 'user',
     getCachedData: (key) => {
-      const cachedUser = retrieveCached<UserWithProfiles>(key)
+      const cachedUser = retrieveCached<UserWithConnections>(key)
       const matchesSessionUser = cachedUser?.id === sessionUser.value?.id
       return matchesSessionUser ? cachedUser : undefined
     },
   })
 
-  const { data: cachedUser } = useNuxtData<UserWithProfiles>('user')
+  const { data: cachedUser } = useNuxtData<UserWithConnections>('user')
 
-  const primaryProfile = computed(() => {
-    return user.value?.profiles?.find((p) => p.isPrimary) ?? user.value?.profiles?.[0]
-  })
+  // No longer needed - user data is directly available
 
   return {
     user,
     cachedUser,
     clearCurrentUser,
-    primaryProfile,
   }
 }

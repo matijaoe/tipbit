@@ -1,38 +1,21 @@
-import { randomUUID } from 'uncrypto'
 import { relations } from 'drizzle-orm'
 import { integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core'
-import { AuthProviders, IdentifierTypes, Roles } from '../../shared/constants/auth'
+import { randomUUID } from 'uncrypto'
+import { AuthProviders, Roles } from '../../shared/constants/auth'
 import { PaymentServiceTypes } from '../../shared/payments/constants'
 
-// Core user entity
+// Core user entity - now contains profile data directly
+// Should we still have separate profile table?
 export const users = sqliteTable('users', {
   id: text('id')
     .primaryKey()
     .$defaultFn(() => randomUUID()),
-  identifierType: text('identifier_type', { enum: IdentifierTypes }).notNull(),
-  identifier: text('identifier').notNull().unique(),
+  identifier: text('identifier').notNull().unique(), // email for social auth, username for passkey auth
+  username: text('username').notNull().unique(), // public handle (@username), matches identifier for passkey auth
+  displayName: text('display_name'),
   avatarUrl: text('avatar_url'),
+  isPublic: integer('is_public', { mode: 'boolean' }).default(false),
   role: text('role', { enum: Roles }).default(Roles[0]).notNull(),
-  createdAt: integer('created_at', { mode: 'timestamp' })
-    .notNull()
-    .$defaultFn(() => new Date()),
-  updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
-})
-
-// Multiple profiles per user
-export const profiles = sqliteTable('profiles', {
-  id: text('id')
-    .primaryKey()
-    .$defaultFn(() => randomUUID()),
-  userId: text('user_id')
-    .notNull()
-    .references(() => users.id, { onDelete: 'cascade' }),
-  handle: text('handle').notNull().unique(),
-  displayName: text('display_name').notNull(),
-  avatarUrl: text('avatar_url'), // possible to override the default user avatar url
-  // bio: text('bio'),
-  isPublic: integer('is_public', { mode: 'boolean' }).default(true),
-  isPrimary: integer('is_default', { mode: 'boolean' }).default(false),
   createdAt: integer('created_at', { mode: 'timestamp' })
     .notNull()
     .$defaultFn(() => new Date()),
@@ -74,7 +57,6 @@ export const paymentConnections = sqliteTable('payment_connections', {
   updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
 })
 
-// Modified Strike connections table
 export const strikeConnections = sqliteTable('strike_connections', {
   id: text('id')
     .primaryKey()
@@ -127,16 +109,16 @@ export const albyConnections = sqliteTable('alby_connections', {
   updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
 })
 
-// Profile-specific payment preferences (ordering)
-export const profilePaymentPreferences = sqliteTable(
-  'profile_payment_preferences',
+// User-specific payment preferences (ordering) - simplified without profiles
+export const userPaymentPreferences = sqliteTable(
+  'user_payment_preferences',
   {
     id: text('id')
       .primaryKey()
       .$defaultFn(() => randomUUID()),
-    profileId: text('profile_id')
+    userId: text('user_id')
       .notNull()
-      .references(() => profiles.id, { onDelete: 'cascade' }),
+      .references(() => users.id, { onDelete: 'cascade' }),
     connectionId: text('connection_id')
       .notNull()
       .references(() => paymentConnections.id, { onDelete: 'cascade' }),
@@ -146,24 +128,18 @@ export const profilePaymentPreferences = sqliteTable(
       .$defaultFn(() => new Date()),
     updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
   },
-  (table) => [uniqueIndex('profile_connection_idx').on(table.profileId, table.connectionId)]
+  (table) => [uniqueIndex('user_connection_idx').on(table.userId, table.connectionId)]
 )
 
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
-  profiles: many(profiles),
   authConnections: many(authConnections),
   paymentConnections: many(paymentConnections),
   credentials: many(credentials),
+  paymentPreferences: many(userPaymentPreferences),
 }))
 
-export const profilesRelations = relations(profiles, ({ one, many }) => ({
-  user: one(users, {
-    fields: [profiles.userId],
-    references: [users.id],
-  }),
-  paymentPreferences: many(profilePaymentPreferences),
-}))
+// REMOVED: profilesRelations - no longer needed
 
 // TODO: there are multiple XYZServiceConnection columns in drizzle studio
 export const paymentConnectionsRelations = relations(paymentConnections, ({ one, many }) => ({
@@ -183,7 +159,7 @@ export const paymentConnectionsRelations = relations(paymentConnections, ({ one,
     fields: [paymentConnections.id],
     references: [albyConnections.connectionId],
   }),
-  profilePreferences: many(profilePaymentPreferences),
+  userPreferences: many(userPaymentPreferences),
 }))
 
 export const strikeConnectionsRelations = relations(strikeConnections, ({ one }) => ({
@@ -207,13 +183,13 @@ export const albyConnectionsRelations = relations(albyConnections, ({ one }) => 
   }),
 }))
 
-export const profilePaymentPreferencesRelations = relations(profilePaymentPreferences, ({ one }) => ({
-  profile: one(profiles, {
-    fields: [profilePaymentPreferences.profileId],
-    references: [profiles.id],
+export const userPaymentPreferencesRelations = relations(userPaymentPreferences, ({ one }) => ({
+  user: one(users, {
+    fields: [userPaymentPreferences.userId],
+    references: [users.id],
   }),
   connection: one(paymentConnections, {
-    fields: [profilePaymentPreferences.connectionId],
+    fields: [userPaymentPreferences.connectionId],
     references: [paymentConnections.id],
   }),
 }))
