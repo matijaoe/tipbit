@@ -39,13 +39,17 @@ function getProviderName(provider: AuthProvider) {
 
           <div class="flex flex-1 flex-col gap-4">
             <div>
+              <h3 class="text-sm font-medium">Identifier</h3>
+              <p>{{ user?.identifier }}</p>
+            </div>
+            <div>
               <h3 class="text-sm font-medium">Username</h3>
               <p class="">@{{ user?.username }}</p>
             </div>
 
             <div>
               <h3 class="text-sm font-medium">Display Name</h3>
-              <p class="">{{ user?.displayName || user?.username }}</p>
+              <p class="">{{ user?.displayName }}</p>
             </div>
 
             <div>
@@ -71,11 +75,14 @@ function getProviderName(provider: AuthProvider) {
               </p>
             </div>
 
-            <div v-if="authConnections">
+            <div>
               <h3 class="text-sm font-medium">Auth</h3>
               <div class="mt-1 flex flex-wrap">
                 <div v-for="connection in authConnections" :key="connection.id">
                   <Badge variant="secondary">{{ getProviderName(connection.provider) }}</Badge>
+                </div>
+                <div v-if="!authConnections?.length">
+                  <Badge variant="secondary">Passkey</Badge>
                 </div>
               </div>
             </div>

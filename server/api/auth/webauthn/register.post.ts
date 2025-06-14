@@ -1,9 +1,9 @@
-import { z } from 'zod'
 import { eq } from 'drizzle-orm'
-import { useDB } from '../../../utils/db'
-import { users, credentials } from '../../../database/schema'
 import { randomUUID } from 'uncrypto'
-import type { DatabaseTransaction } from '../../../database'
+import { z } from 'zod'
+import type { DatabaseTransaction } from '~~/server/database'
+import { credentials, users } from '~~/server/database/schema'
+import { useDB } from '~~/server/utils/db'
 
 // Function to create a unique username
 async function createUniqueUsername(tx: DatabaseTransaction, baseUsername: string): Promise<string> {
@@ -26,22 +26,22 @@ async function createUniqueUsername(tx: DatabaseTransaction, baseUsername: strin
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     const randomSuffix = Math.floor(1000 + Math.random() * 9000) // 4-digit number (1000-9999)
     const username = `${cleanBase}${randomSuffix}`
-    
+
     const conflictingUser = await tx.query.users.findFirst({
       where: eq(users.username, username),
     })
-    
+
     if (!conflictingUser) {
       return username
     }
   }
-  
+
   // Fallback: if somehow all random attempts fail, use timestamp
   return `${cleanBase}${Date.now().toString().slice(-4)}`
 }
 
 export default defineWebAuthnRegisterEventHandler({
-  async getOptions(event, user) {
+  async getOptions(_event, _user) {
     // Configure for discoverable credentials (usernameless login)
     return {
       authenticatorSelection: {
@@ -51,11 +51,18 @@ export default defineWebAuthnRegisterEventHandler({
       },
     }
   },
-  async validateUser(userBody, event) {
-    return z.object({
-      userName: z.string().min(3).max(50).trim().regex(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores'),
-      displayName: z.string().trim().optional(),
-    }).parse(userBody)
+  async validateUser(userBody, _event) {
+    return z
+      .object({
+        userName: z
+          .string()
+          .min(3)
+          .max(50)
+          .trim()
+          .regex(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores'),
+        displayName: z.string().trim().optional(),
+      })
+      .parse(userBody)
   },
   async excludeCredentials(event, user) {
     const db = useDB()
@@ -64,10 +71,10 @@ export default defineWebAuthnRegisterEventHandler({
         .select({ id: credentials.id })
         .from(users)
         .innerJoin(credentials, eq(credentials.userId, users.id))
-        .where(eq(users.username, user.userName))
+        .where(eq(users.username, user))
 
-      return result.filter(row => row.id).map(row => ({ id: row.id }))
-    } catch (error) {
+      return result.filter((row) => row.id).map((row) => ({ id: row.id }))
+    } catch {
       // Return empty array if user doesn't exist yet
       return []
     }
@@ -81,21 +88,24 @@ export default defineWebAuthnRegisterEventHandler({
         // Check if user already exists with this username
         const existingUsers = await tx.select().from(users).where(eq(users.username, user.userName))
         dbUser = existingUsers[0]
-        
+
         if (!dbUser) {
           // Ensure username is unique
           const uniqueUsername = await createUniqueUsername(tx, user.userName)
-          
+
           // Create new user with username as both identifier and username
           const userId = randomUUID()
-          const [newUser] = await tx.insert(users).values({
-            id: userId,
-            identifier: uniqueUsername, // username serves as identifier for passkeys
-            username: uniqueUsername,
-            displayName: user.displayName || `${uniqueUsername}`,
-            isPublic: false, // Private by default
-          }).returning()
-          
+          const [newUser] = await tx
+            .insert(users)
+            .values({
+              id: userId,
+              identifier: uniqueUsername, // username serves as identifier for passkeys
+              username: uniqueUsername,
+              // displayName: user.displayName || `${uniqueUsername}`,
+              isPublic: false, // Private by default
+            })
+            .returning()
+
           dbUser = newUser
           console.log('Created new user with username:', uniqueUsername, 'for user:', dbUser.id)
         }
@@ -135,14 +145,14 @@ export default defineWebAuthnRegisterEventHandler({
 
       // Return success - frontend will handle redirect
       console.log('WebAuthn registration successful for user:', dbUser.id)
-    }
-    catch (err) {
+    } catch (err) {
       console.error('WebAuthn registration error:', err)
       throw createError({
         statusCode: 500,
-        message: err instanceof Error && err.message.includes('UNIQUE constraint failed') 
-          ? 'User already registered' 
-          : `Failed to store credential: ${err instanceof Error ? err.message : 'Unknown error'}`,
+        message:
+          err instanceof Error && err.message.includes('UNIQUE constraint failed')
+            ? 'User already registered'
+            : `Failed to store credential: ${err instanceof Error ? err.message : 'Unknown error'}`,
       })
     }
   },

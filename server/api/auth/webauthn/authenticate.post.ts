@@ -70,7 +70,7 @@ export default defineWebAuthnAuthenticateEventHandler({
         id: dbUser.id,
         username: dbUser.username,
         identifier: dbUser.identifier,
-        displayName: dbUser.displayName,
+        // displayName: dbUser.displayName,
         role: dbUser.role,
         avatarUrl: dbUser.avatarUrl ?? undefined,
       },

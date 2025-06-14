@@ -36,7 +36,6 @@ const handlePasskeyAuth = async () => {
       console.log('Attempting passkey registration for:', userName)
       success = await register({
         userName,
-        displayName: `User ${userName}`,
       })
       console.log('Registration result:', success)
     } else {

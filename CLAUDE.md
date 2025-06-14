@@ -9,6 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 pnpm db:push        # Push schema changes to database
 pnpm db:generate    # Generate new migrations
 pnpm db:migrate     # Run pending migrations
+pnpm db:seed        # Seed database with initial data
 pnpm studio         # Launch Drizzle Studio (database GUI)
 pnpm db:reset       # Reset database (destructive)
 ```
@@ -23,8 +24,9 @@ pnpm keygen:auth      # Generate session authentication key
 ### Code Quality
 ```bash
 pnpm lint           # Run ESLint
+pnpm lint:fix       # Run ESLint with auto-fix
 pnpm typecheck      # Run TypeScript checks
-pnpm test           # Run tests with Vitest
+vitest              # Run tests with Vitest
 pnpm dev            # Start development server
 pnpm build          # Build for production
 ```
@@ -77,6 +79,8 @@ Uses **adapter pattern** with `PaymentAdapter` interface:
 - Follow **Composition API** patterns
 - Auto-imports available for composables and utilities
 - Type-safe props with TypeScript
+- Use `const` for variables, arrow functions over function declarations
+- Prefer `type` over `interface` for TypeScript definitions
 
 ### API Development
 - Server routes in `server/api/` with Nitro
@@ -88,6 +92,9 @@ Uses **adapter pattern** with `PaymentAdapter` interface:
 - **Vitest** with Nuxt environment
 - Database tests use separate test database
 - Security functions have dedicated test files
+
+## Requirements
+- **Node.js**: Version 22.x (specified in package.json engines)
 
 ## Environment Variables
 Required for development:

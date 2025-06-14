@@ -62,11 +62,12 @@ const adminItems: MenuItem[] = [
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton as-child>
-                <NuxtLink :to="`/${username}`">
+                <NuxtLink :to="currentUser?.isPublic ? `/${username}` : '/dashboard/settings'">
                   <Globe />
                   <div class="leading flex w-full items-center justify-between gap-2">
                     <span>Public page</span>
-                    <Badge size="sm" variant="secondary">external</Badge>
+                    <Badge v-if="!currentUser?.isPublic" size="sm" variant="destructive">disabled</Badge>
+                    <Badge v-else size="sm" variant="secondary">external</Badge>
                   </div>
                 </NuxtLink>
               </SidebarMenuButton>

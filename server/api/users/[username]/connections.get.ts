@@ -1,8 +1,7 @@
 import { eq } from 'drizzle-orm'
 import { createError, defineEventHandler, getValidatedRouterParams } from 'h3'
 import { z } from 'zod'
-import { users, userPaymentPreferences, paymentConnections } from '~~/server/database/schema'
-import { sanitizeConnections } from '~~/server/utils/security'
+import { paymentConnections, users } from '~~/server/database/schema'
 
 const paramsSchema = z.object({
   username: z

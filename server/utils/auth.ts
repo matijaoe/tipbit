@@ -116,8 +116,8 @@ export async function handleOAuthLogin(event: H3Event, providerData: OAuthProvid
 async function createUniqueUsername(tx: DatabaseTransaction, identifier: string): Promise<string> {
   const cleanBase = identifier
     .toLowerCase()
-    .replace(/[^a-zA-Z0-9_]/g, '')
     .split('@')[0]
+    .replace(/[^a-zA-Z0-9_]/g, '')
 
   // First try the base username without any suffix
   const existingUser = await tx.query.users.findFirst({
