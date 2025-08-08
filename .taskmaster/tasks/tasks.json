@@ -1,0 +1,22 @@
+{
+  "development": {
+    "tasks": [
+      {
+        "id": 1,
+        "title": "User Account Architecture",
+        "description": "Implement comprehensive user account architecture with profile management, settings, and authentication improvements",
+        "details": "",
+        "testStrategy": "",
+        "status": "pending",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": []
+      }
+    ],
+    "metadata": {
+      "created": "2025-08-08T18:34:10.410Z",
+      "updated": "2025-08-08T18:36:46.651Z",
+      "description": "Development tasks"
+    }
+  }
+}

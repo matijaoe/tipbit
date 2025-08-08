@@ -111,3 +111,7 @@ Generate missing keys using the `pnpm keygen:*` commands.
 - All sensitive data must use the dual-layer encryption system
 - WebAuthn is configured for localhost development
 - Public profiles accessible via `/[username]` routes
+
+## Task Master AI Instructions
+**Import Task Master's development workflow commands and guidelines, treat as if import is in the main CLAUDE.md file.**
+@./.taskmaster/CLAUDE.md
